@@ -13,9 +13,12 @@
             <file>file:/D:/Microchip/MPLABXProjects/lorax_2.X/lorawan.c</file>
             <file>file:/D:/Microchip/MPLABXProjects/lorax_2.X/lorawan_init.c</file>
             <file>file:/D:/Microchip/MPLABXProjects/lorax_2.X/interrupt_manager_lora_addons.h</file>
+            <file>file:/D:/Microchip/MPLABXProjects/lorax_2.X/mcc_generated_files/interrupt_manager.c</file>
+            <file>file:/D:/Microchip/MPLABXProjects/lorax_2.X/radio_driver_hal.c</file>
             <file>file:/D:/Microchip/MPLABXProjects/lorax_2.X/lorawan.h</file>
             <file>file:/D:/Microchip/MPLABXProjects/lorax_2.X/interrupt_manager_lora_addons.c</file>
             <file>file:/D:/Microchip/MPLABXProjects/lorax_2.X/lorawan_ru.c</file>
+            <file>file:/D:/Microchip/MPLABXProjects/lorax_2.X/mcc_generated_files/interrupt_manager.h</file>
             <file>file:/D:/Microchip/MPLABXProjects/lorax_2.X/shell.c</file>
             <file>file:/D:/Microchip/MPLABXProjects/lorax_2.X/sensors.h</file>
             <file>file:/D:/Microchip/MPLABXProjects/lorax_2.X/main.c</file>

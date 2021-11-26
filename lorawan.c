@@ -1360,6 +1360,8 @@ LorawanError_t LORAWAN_RxDone (uint8_t *buffer, uint8_t bufferLength)
 
             UpdateJoinSuccessState(0);
             
+            loRa.devNonce++;
+            put_DevNonce(jsnumber, loRa.devNonce);
             loRa.fCntUp.value = 0;   // uplink counter becomes 0
             loRa.fCntDown.value = 0; // downlink counter becomes 0              
 
@@ -2342,9 +2344,7 @@ static uint8_t PrepareJoinRequestFrame (void)
     bufferIndex = bufferIndex + sizeof( loRa.activationParameters.deviceEui );
 
 //    loRa.devNonce = Random (UINT16_MAX);
-    loRa.devNonce=joinServer.DevNonce;
-    joinServer.DevNonce++;
-    put_DevNonce(jsnumber, joinServer.DevNonce);
+    loRa.devNonce=get_DevNonce(jsnumber);
     memcpy (&macBuffer[bufferIndex], &loRa.devNonce, sizeof (loRa.devNonce) );
     bufferIndex = bufferIndex + sizeof( loRa.devNonce );
 

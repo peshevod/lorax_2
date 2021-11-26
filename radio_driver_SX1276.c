@@ -211,8 +211,8 @@ static void RADIO_WriteMode(RadioMode_t newMode, RadioModulation_t newModulation
         {
             if (MODE_SLEEP != newMode)
             {
-                while (HALDIO5PinValue() == 0)
-                    ;
+                while (HALDIO5PinValue() == 0);
+//                SystemBlockingWaitMs(10);
             }
             else
             {

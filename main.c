@@ -299,6 +299,12 @@ void main(void)
 //    clear_uid();
 //    erase_EEPROM_Data();    
     Sync_EEPROM();
+    uint32_t dn=get_DevNonce(1);
+    printVar("DevNonce1=",PAR_UI32,&dn,false,true);
+    dn=get_DevNonce(2);
+    printVar("DevNonce2=",PAR_UI32,&dn,false,true);
+    dn=get_DevNonce(3);
+    printVar("DevNonce3=",PAR_UI32,&dn,false,true);
     getTableValues();
     SystemTimerInit();
     TMR_ISR_Lora_Init();
