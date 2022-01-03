@@ -1,0 +1,2 @@
+Note 1: SPIxCON1.SMP bit must be set and the slew rate control must be disabled on the clock and data pins
+(clear the corresponding bits in SLRCONx register) for SPI to operate over 4 MHz.

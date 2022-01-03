@@ -64,21 +64,21 @@ void PIN_MANAGER_Initialize(void)
     */
     LATA = 0x00;
     LATB = 0x00;
-    LATC = 0x51;
+    LATC = 0x01;
 
     /**
     TRISx registers
     */
-    TRISA = 0xFF;
+    TRISA = 0x3F;
     TRISB = 0xE7;
-    TRISC = 0x27;
+    TRISC = 0xEB;
 
     /**
     ANSELx registers
     */
     ANSELC = 0x00;
-    ANSELB = 0xC1;
-    ANSELA = 0x73;
+    ANSELB = 0xC0;
+    ANSELA = 0x33;
 
     /**
     WPUx registers
@@ -108,9 +108,9 @@ void PIN_MANAGER_Initialize(void)
     */
     SLRCONA = 0xFF;
     SLRCONB = 0xFF;
-// For >4MHz
-    SLRCONC = 0x7C;
-// For<=4NHz
+// For >4MHz RC2,RC3,RC4
+    SLRCONC = 0xE3;
+// For<=4MHz
 //    SLRCONC = 0xFF;
     /**
     INLVLx registers
@@ -161,14 +161,14 @@ void PIN_MANAGER_Initialize(void)
     PIE0bits.IOCIE = 1; 
     
 	
-    SPI1SCKPPS = 0x13;   //RC3->SPI1:SCK1;    
-    RC3PPS = 0x1E;   //RC3->SPI1:SCK1;    
+    SPI1SCKPPS = 0x14;   //RC4->SPI1:SCK1;    
     INT0PPS = 0x0A;   //RB2->EXT_INT:INT0;    
+    RC4PPS = 0x1E;   //RC4->SPI1:SCK1;    
     RB4PPS = 0x13;   //RB4->UART1:TX1;    
+    RC2PPS = 0x1F;   //RC2->SPI1:SDO1;    
     INT1PPS = 0x09;   //RB1->EXT_INT:INT1;    
     U1RXPPS = 0x0D;   //RB5->UART1:RX1;    
-    RC7PPS = 0x1F;   //RC7->SPI1:SDO1;    
-    SPI1SDIPPS = 0x12;   //RC2->SPI1:SDI1;    
+    SPI1SDIPPS = 0x13;   //RC3->SPI1:SDI1;    
 }
   
 void PIN_MANAGER_IOC(void)

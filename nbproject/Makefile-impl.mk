@@ -24,7 +24,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=lorax_2.X
+PROJECTNAME=lorax_2
 
 # Active Configuration
 DEFAULTCONF=default
