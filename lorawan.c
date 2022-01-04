@@ -2330,9 +2330,11 @@ static uint8_t PrepareJoinRequestFrame (void)
 
     macBuffer[bufferIndex++] = mhdr.value;  // add the mac header to the buffer
 
+//        printVar("Prepare Join JoinEui=",PAR_EUI64,&loRa.activationParameters.joinEui,true,true);
     for(iCtr = 0; iCtr < 8; iCtr ++)
     {
         macBuffer[bufferIndex + iCtr] = loRa.activationParameters.joinEui.buffer[7 - iCtr];
+//        macBuffer[bufferIndex + iCtr] = loRa.activationParameters.joinEui.buffer[iCtr];
     }
     bufferIndex = bufferIndex + sizeof(loRa.activationParameters.joinEui);
 

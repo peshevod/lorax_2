@@ -5,7 +5,9 @@
         <group>
             <file>file:/C:/Users/ilya/MPLABXProjects/lorax_2/lorawan_init.c</file>
             <file>file:/C:/Users/ilya/MPLABXProjects/lorax_2/main.c</file>
+            <file>file:/C:/Users/ilya/MPLABXProjects/lorax_2/mcc_generated_files/interrupt_manager.c</file>
             <file>file:/C:/Users/ilya/MPLABXProjects/lorax_2/radio_driver_SX1276.c</file>
+            <file>file:/C:/Users/ilya/MPLABXProjects/lorax_2/mcc_generated_files/pin_manager.c</file>
             <file>file:/C:/Users/ilya/MPLABXProjects/lorax_2/interrupt_manager_lora_addons.c</file>
         </group>
     </open-files>

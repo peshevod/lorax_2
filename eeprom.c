@@ -310,9 +310,12 @@ uint16_t get_DevNonce(uint8_t n)
 {
     uint16_t dev_start=DEVNONCE_START+(n-1)*2;
     uint16_t d=(uint16_t)DATAEE_ReadByte(dev_start) | (((uint16_t)(DATAEE_ReadByte(dev_start+1)))<<8);
-    if(d!=0xffff) return d;       
-    put_DevNonce(n,0);
-    return 0;
+    if(d==0xffff || d==0)
+    {
+        put_DevNonce(n,1);
+        return 1;        
+    }
+    else return d;       
 }
 
 /*void put_JoinNonce(uint8_t* joinnonce)
