@@ -128,6 +128,8 @@ static void RADIO_WriteMode(RadioMode_t newMode, RadioModulation_t newModulation
     RadioModulation_t currentModulation;
     RadioMode_t currentMode;
 
+    PIE0bits.IOCIE = 0;
+    
     if ((MODULATION_FSK == newModulation) &&
         ((MODE_RXSINGLE == newMode) || (MODE_CAD == newMode)))
     {
@@ -199,6 +201,7 @@ static void RADIO_WriteMode(RadioMode_t newMode, RadioModulation_t newModulation
                 dioMapping &= ~0x30;    // DIO5 = 00 means ModeReady in LoRa mode
             }
             RADIO_RegisterWrite(REG_DIOMAPPING2, dioMapping);
+            if(MODULATION_LORA == newModulation) PIE0bits.IOCIE = 1;
         }
 
         // Do the actual mode switch.
@@ -220,6 +223,7 @@ static void RADIO_WriteMode(RadioMode_t newMode, RadioModulation_t newModulation
             }
         }
     }
+
 }
 
 

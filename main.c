@@ -182,15 +182,18 @@ LorawanError_t  LORAX_RxDone(uint8_t* buffer, uint8_t buflen)
 
 void SX1276_Reset(void)
 {
+    PIE0bits.IOCIE = 0;
     uint8_t t_nreset=SwTimerCreate();
     SwTimerSetTimeout(t_nreset,MS_TO_TICKS(5));
     NRESET_SetLow();
+//    SystemBlockingWaitMs(10);
     SwTimerStart(t_nreset);
     while(SwTimerIsRunning(t_nreset)) SwTimersExecute();
     NRESET_SetHigh();
     SwTimerSetTimeout(t_nreset,MS_TO_TICKS(5));
     SwTimerStart(t_nreset);
     while(SwTimerIsRunning(t_nreset)) SwTimersExecute();
+//    SystemBlockingWaitMs(10);
  }
 
 void print_array(void)
@@ -332,8 +335,8 @@ void main(void)
     set_s("INTERVAL",&dt);
     set_s("MODE",&mode);
     
-    SX1276_Reset();
     LORAWAN_PlatformInit();
+    SX1276_Reset();
     switch(mode)
     {
         case MODE_SEND:

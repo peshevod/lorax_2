@@ -55,6 +55,7 @@ void (*IOCAF2_InterruptHandler)(void);
 void (*IOCAF3_InterruptHandler)(void);
 void (*IOCBF1_InterruptHandler)(void);
 void (*IOCBF2_InterruptHandler)(void);
+void (*IOCCF5_InterruptHandler)(void);
 
 
 void PIN_MANAGER_Initialize(void)
@@ -63,7 +64,7 @@ void PIN_MANAGER_Initialize(void)
     LATx registers
     */
     LATA = 0x00;
-    LATB = 0x00;
+    LATB = 0x08;
     LATC = 0x01;
 
     /**
@@ -148,6 +149,12 @@ void PIN_MANAGER_Initialize(void)
     IOCBPbits.IOCBP1 = 1;
     //interrupt on change for group IOCBP - positive
     IOCBPbits.IOCBP2 = 1;
+    //interrupt on change for group IOCCF - flag
+    IOCCFbits.IOCCF5 = 0;
+    //interrupt on change for group IOCCN - negative
+    IOCCNbits.IOCCN5 = 0;
+    //interrupt on change for group IOCCP - positive
+    IOCCPbits.IOCCP5 = 1;
 
 
 
@@ -156,9 +163,10 @@ void PIN_MANAGER_Initialize(void)
     IOCAF3_SetInterruptHandler(IOCAF3_DefaultInterruptHandler);
     IOCBF1_SetInterruptHandler(IOCBF1_DefaultInterruptHandler);
     IOCBF2_SetInterruptHandler(IOCBF2_DefaultInterruptHandler);
+    IOCCF5_SetInterruptHandler(IOCCF5_DefaultInterruptHandler);
    
     // Enable IOCI interrupt 
-    PIE0bits.IOCIE = 1; 
+    PIE0bits.IOCIE = 0; 
     
 	
     SPI1SCKPPS = 0x14;   //RC4->SPI1:SCK1;    
@@ -193,6 +201,11 @@ void PIN_MANAGER_IOC(void)
     {
         IOCBF2_ISR();  
     }	
+	// interrupt on change for pin IOCCF5
+    if(IOCCFbits.IOCCF5 == 1)
+    {
+        IOCCF5_ISR();  
+}
 }
 
 /**
@@ -313,6 +326,36 @@ void IOCBF2_SetInterruptHandler(void (* InterruptHandler)(void)){
 void IOCBF2_DefaultInterruptHandler(void){
     // add your IOCBF2 interrupt custom code
     // or set custom function using IOCBF2_SetInterruptHandler()
+}
+
+/**
+   IOCCF5 Interrupt Service Routine
+*/
+void IOCCF5_ISR(void) {
+
+    // Add custom IOCCF5 code
+
+    // Call the interrupt handler for the callback registered at runtime
+    if(IOCCF5_InterruptHandler)
+    {
+        IOCCF5_InterruptHandler();
+    }
+    IOCCFbits.IOCCF5 = 0;
+}
+
+/**
+  Allows selecting an interrupt handler for IOCCF5 at application runtime
+*/
+void IOCCF5_SetInterruptHandler(void (* InterruptHandler)(void)){
+    IOCCF5_InterruptHandler = InterruptHandler;
+}
+
+/**
+  Default interrupt handler for IOCCF5
+*/
+void IOCCF5_DefaultInterruptHandler(void){
+    // add your IOCCF5 interrupt custom code
+    // or set custom function using IOCCF5_SetInterruptHandler()
 }
 
 /**
