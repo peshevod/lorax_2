@@ -880,8 +880,15 @@ LorawanError_t SearchAvailableChannel (uint8_t maxChannels, bool transmissionTyp
     set_s("CHANNEL",&i);
     if(i!=0xFF)
     {
-        *channelIndex=i;
-        return OK;
+        if ( ( Channels[i].status == ENABLED ) && ( Channels[i].channelTimer == 0 ) && ( loRa.currentDataRate >= Channels[i].dataRange.min ) && ( loRa.currentDataRate <= Channels[i].dataRange.max ) )
+        {
+            if ( (!transmissionType && Channels[i].joinRequestChannel == 1) || transmissionType) // if transmissionType is join request, then check also for join request channels
+            {
+                *channelIndex=i;
+                return OK;
+            }
+        }
+        return NO_CHANNELS_FOUND;
     }
     
     randomNumber = Random (maxChannels) + 1; //this is a guard so that randomNumber is not 0 and the search will happen
