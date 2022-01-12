@@ -7,6 +7,7 @@
 #include <xc.h>
 
 uint8_t sensor1_inv, sensor2_inv, sensor1_en, sensor2_en, sensor1_trg, sensor2_trg;
+volatile uint8_t sensor_event;
 extern volatile uint8_t dioStatus;
 extern bool readAndSendFlag;
 extern Data_t data;
@@ -14,11 +15,14 @@ extern Data_t data;
 void Sensor1_ISR(void)
 {
     dioStatus|=SENSOR1;
+    sensor_event=1;
+    
 }
 
 void Sensor2_ISR(void)
 {
     dioStatus|=SENSOR2;
+    sensor_event=1;
 }
 
 void SensorsInit(void)

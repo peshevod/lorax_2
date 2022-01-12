@@ -52,7 +52,9 @@ extern volatile uint8_t timerOverflow;
 extern volatile uint32_t ticksToScheduledInterrupt;
 extern volatile uint16_t reloadVal;
 extern volatile uint32_t ticksAdded;
-    
+extern volatile uint32_t ticksAccounted;
+extern volatile uint32_t ticksNCO;
+
 void TMR_ISR_lora(void);
 void TMR_ISR_Lora_Init(void);
     

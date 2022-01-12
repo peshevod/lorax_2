@@ -527,6 +527,7 @@ typedef struct
     uint8_t sendDownAck1TimerId;
     uint8_t sendJoinAccept1TimerId;
     uint8_t virtualTimer;
+    uint8_t rectimer;
 } LoRa_t;
 
 

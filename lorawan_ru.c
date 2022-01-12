@@ -112,6 +112,7 @@ uint32_t tt0_value=86400;
 //extern Profile_t devices[MAX_EEPROM_RECORDS];
 //extern uint8_t number_of_devices;
 extern int32_t rx1_offset;
+extern uint8_t jsnumber;
 
 
 
@@ -449,8 +450,6 @@ void LORAWAN_TxDone(uint16_t timeOnAir)
             //This flag is used when the reception in RX1 is overlapping the opening of RX2
             loRa.rx2DelayExpired = 0;
             loRa.macStatus.macState = BEFORE_RX1;
-        
-
 
             // the join request should never exceed 0.1%
             if (loRa.lorawanMacStatus.joining == 1)
@@ -461,6 +460,8 @@ void LORAWAN_TxDone(uint16_t timeOnAir)
                 SwTimerStart(loRa.joinAccept2TimerId);
 
                 Channels[i].channelTimer = ((uint32_t)timeOnAir) * (((uint32_t)DUTY_CYCLE_JOIN_REQUEST + 1) * ((uint32_t)loRa.prescaler) - 1); 
+                loRa.devNonce++;
+                put_DevNonce(jsnumber, loRa.devNonce);
             }
             else
             {
@@ -880,6 +881,8 @@ LorawanError_t SearchAvailableChannel (uint8_t maxChannels, bool transmissionTyp
     set_s("CHANNEL",&i);
     if(i!=0xFF)
     {
+        printVar("Search channel= ",PAR_UI8,&i,false,true);
+        printVar("channelTimer= ",PAR_UI32,&Channels[i].channelTimer,false,true);
         if ( ( Channels[i].status == ENABLED ) && ( Channels[i].channelTimer == 0 ) && ( loRa.currentDataRate >= Channels[i].dataRange.min ) && ( loRa.currentDataRate <= Channels[i].dataRange.max ) )
         {
             if ( (!transmissionType && Channels[i].joinRequestChannel == 1) || transmissionType) // if transmissionType is join request, then check also for join request channels
@@ -1065,6 +1068,7 @@ static void CreateAllSoftwareTimers (void)
     }*/
     tt0=SwTimerCreate();
     loRa.virtualTimer=SwTimerCreate();
+    loRa.rectimer=SwTimerCreate();
 }
 
 static void SetCallbackSoftwareTimers (void)
@@ -1105,6 +1109,7 @@ static void StopAllSoftwareTimers (void)
     }*/
 	SwTimerStop(tt0);
     SwTimerStop(loRa.virtualTimer);
+    SwTimerStop(loRa.rectimer);
 }
 
 static void InitDefault868Channels (void)

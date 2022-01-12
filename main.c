@@ -60,6 +60,7 @@
 #include "eeprom.h"
 #include "measurements.h"
 #include "sensors.h"
+#include "sleep.h"
 /*
                          Main application
  */
@@ -75,7 +76,7 @@ uint8_t appkey[16];
 uint8_t endDeviceJoinedFlag = false;
 uint8_t startDeviceJoinedFlag = true;
 uint32_t joinInterval;
-uint8_t JoinIntervalTimerId;
+uint8_t JoinIntervalTimerId, pauseTimerId;
 bool readAndSendFlag = true;
 
 void RxDataDone(uint8_t* pData, uint8_t dataLength, OpStatus_t status);
@@ -86,7 +87,7 @@ uint8_t LoRa_CanSleep(void);
 void LoRaSleep(void);
 void LoRaWakeUp(void);
 uint8_t computeSensorPercent (uint16_t sensorValueToCompute);
-void readAndSend(void);
+LorawanError_t readAndSend(void);
 void print_array();
 void StartJoinProcedure(uint8_t param);
 
@@ -95,18 +96,16 @@ uint8_t localDioStatus;
 uint8_t radio_buffer[256];
 //uint8_t send_array[256];
 uint8_t mode,t0,t1,rx_done;
-uint32_t dt;
 uint32_t calibration_frequency, bandwidth;
 RadioError_t radio_err;
 extern uint32_t uid;
 uint32_t m;
-volatile uint32_t rest, counter, counter0;
-uint8_t ncol, ncoh, ncou, nco;
 volatile uint8_t insleep;
 uint8_t spread_factor;
 extern GenericEui_t deveui,joineui;
 uint32_t DenyTransmit, DenyReceive;
 Data_t data;
+uint32_t dt;
 
 extern char b[128];
 extern uint8_t trace;
@@ -120,6 +119,8 @@ extern uint8_t DevAddr[4];
 extern Profile_t devices[MAX_EEPROM_RECORDS];
 extern LoRa_t loRa;
 Sensors_t sensors;
+volatile uint8_t pauseEnded=1;
+uint8_t pauseTimerId;
 
 char* errors[] = {
     "OK",
@@ -139,6 +140,11 @@ char* errors[] = {
 };
 
 
+void pauseCallback(uint8_t param)
+{
+    pauseEnded=1;
+    SwTimerStop(pauseTimerId);
+}
 
 void LORAX_TxDone(uint16_t timeOnAir, uint8_t was_timeout)
 {
@@ -179,22 +185,6 @@ LorawanError_t  LORAX_RxDone(uint8_t* buffer, uint8_t buflen)
     RADIO_ReleaseData();
     rx_done=1;
 }
-
-void SX1276_Reset(void)
-{
-    PIE0bits.IOCIE = 0;
-    uint8_t t_nreset=SwTimerCreate();
-    SwTimerSetTimeout(t_nreset,MS_TO_TICKS(5));
-    NRESET_SetLow();
-//    SystemBlockingWaitMs(10);
-    SwTimerStart(t_nreset);
-    while(SwTimerIsRunning(t_nreset)) SwTimersExecute();
-    NRESET_SetHigh();
-    SwTimerSetTimeout(t_nreset,MS_TO_TICKS(5));
-    SwTimerStart(t_nreset);
-    while(SwTimerIsRunning(t_nreset)) SwTimersExecute();
-//    SystemBlockingWaitMs(10);
- }
 
 void print_array(void)
 {
@@ -257,38 +247,13 @@ void Transmit_array(void)
     ((uint32_t*)(&data.snr))[0]++;
 }
 
-void compute_nco(void)
-{
-    counter0=(dt*1000)/4329559; // кол-во полных циклов nco1
-    uint64_t div=(dt*1000)-(counter0*4329559); // кол-во ms в неполном цикле nco1
-    if(div==0) counter0--; // коррекция полных циклов nco1 если div==0
-    rest=1048576-(div*24219)/100000; // максимальное кол-во циклов в nco1(2^20=1024x1024) минус кол-во циклов CLKR(LFINTOSC/128) в оставшихся милисекундах
-    ncou = (rest&0x00FF0000)>>16;
-    ncoh = (rest&0x0000FF00)>>8;
-    ncol = (rest&0x000000FF);
-    nco=0;
-    /*send_chars("nco dt=");
-    send_chars(ui32toa(dt,b));
-    send_chars(", counter=");
-    send_chars(ui32toa(counter,b));
-    send_chars(", rest=");
-    send_chars(ui32toa(rest,b));
-    send_chars(", ncou=");
-    send_chars(ui8tox(ncou,b));
-    send_chars(", ncoh=");
-    send_chars(ui8tox(ncoh,b));
-    send_chars(", ncol=");
-    send_chars(ui8tox(ncol,b));
-    send_chars("\r\n");*/
-}
 
 void main(void)
 {
     // Initialize the device
-    SYSTEM_Initialize();
+//    SYSTEM_Initialize();
 //    NCO1CONbits.EN = 0;
-    insleep=0;
-
+    init_system();
     // If using interrupts in PIC18 High/Low Priority Mode you need to enable the Global High and Low Interrupts
     // If using interrupts in PIC Mid-Range Compatibility Mode you need to enable the Global Interrupts
     // Use the following macros to:
@@ -309,9 +274,9 @@ void main(void)
     dn=get_DevNonce(3);
     printVar("DevNonce3=",PAR_UI32,&dn,false,true);
     getTableValues();
-    SystemTimerInit();
-    TMR_ISR_Lora_Init();
-    SensorsInit();
+//    SystemTimerInit();
+//    TMR_ISR_Lora_Init();
+//    SensorsInit();
     
     
     print_array();
@@ -335,8 +300,8 @@ void main(void)
     set_s("INTERVAL",&dt);
     set_s("MODE",&mode);
     
-    LORAWAN_PlatformInit();
-    SX1276_Reset();
+//    LORAWAN_PlatformInit();
+//    SX1276_Reset();
     switch(mode)
     {
         case MODE_SEND:
@@ -381,13 +346,7 @@ void main(void)
         case MODE_DEVICE:
             send_chars("Device\r\n");
             TMR3_SetInterruptHandler(handle16sInterrupt);
-            compute_nco();
-            counter=counter0;
-            NCO1ACCU = ncou;
-            NCO1ACCH = ncoh;
-            NCO1ACCL = ncol;
-            NCO1CONbits.EN = 1;
-            SysConfigSleep();
+//            SysConfigSleep();
     
             LORAWAN_Init(RxDataDone, RxJoinResponse);
 //            LORAWAN_SetNetworkSessionKey(nwkSKey);
@@ -406,6 +365,7 @@ void main(void)
     
             // Wait for Join response
             JoinIntervalTimerId=SwTimerCreate();
+            
             SwTimerSetCallback(JoinIntervalTimerId,StartJoinProcedure,0);
             StartJoinProcedure(0);
             startDeviceJoinedFlag = false;
@@ -423,38 +383,35 @@ void main(void)
             }
 
             // Application main loop
+            LorawanError_t err;
+            pauseTimerId=SwTimerCreate();
+            uint8_t lastPauseEnded=pauseEnded;
+            SwTimerSetCallback(pauseTimerId, pauseCallback, 0);
+            SwTimerSetTimeout(pauseTimerId, MS_TO_TICKS(1000));
             while (1)
             {   
                 // Stack management
                 LORAWAN_Mainloop();
 
-                if(nco)
-                {
-//                    NCO1CONbits.EN = 0;
-                    readAndSendFlag = true;
-                    counter=counter0;
-                    NCO1MD=1;
-                    NCO1MD=0;
-                    NCO1CON = 0x00;
-                    NCO1CLK = 0x06;
-                    NCO1ACCU = ncou;
-                    NCO1ACCH = ncoh;
-                    NCO1ACCL = ncol;
-                    NCO1INCU = 0x00;
-                    NCO1INCH = 0x00;
-                    NCO1INCL = 0x01;
-                    PIR4bits.NCO1IF = 0;
-                    PIE4bits.NCO1IE = 1;
-                    NCO1CONbits.EN = 1;
-                    nco=0;
-                }
                 // Application management
-                if(readAndSendFlag == true)
+                if(pauseEnded)
                 {
-//                   LoRaWakeUp();
-                    insleep=0;
-                    readAndSend();
-                    readAndSendFlag = false;
+//                    send_chars("Pause Ended\r\n");
+                    if(readAndSendFlag == true)
+                    {
+    //                   LoRaWakeUp();
+                        if((err=readAndSend())==OK) readAndSendFlag = false;
+                    }
+                    if(err==OK && LoRa_CanSleep())
+                    {
+                        my_sleep(30);
+                        readAndSendFlag=true;
+                    }
+                    else if(err==NO_CHANNELS_FOUND)
+                    {
+                        pauseEnded=0;
+                        SwTimerStart(pauseTimerId);
+                    }
                 }
 /*                send_chars(ui8tox(NCO1ACCU,b));
                 send_chars(" ");
@@ -518,75 +475,6 @@ void handle16sInterrupt() {
     } 
 }
 
-void handleNCOInterrupt() {
-    if( counter == 0 )
-    {
-        insleep=0;
-        nco=1;
-    } 
-    else 
-    {
-        counter--;
-        if(insleep) SLEEP();
-    } 
-}
-
-void SysConfigSleep(void)
-{
-    // Turn off everything the project won't ever use
-//    NCO1MD = 1;
-    TMR6MD = 1;
-    TMR5MD = 1;    
-    TMR4MD = 1;
-    TMR2MD = 1;
-//    TMR0MD = 1;
-    DACMD  = 1;
-//    ADCMD  = 1;
-    CMP2MD = 1;
-    CMP1MD = 1;
-    ZCDMD  = 1;
-    PWM8MD = 1;
-    PWM7MD = 1;
-    PWM6MD = 1;
-    PWM5MD = 1;
-    CCP4MD = 1;
-    CCP3MD = 1;
-    CCP2MD = 1;
-    CCP1MD = 1;
-    CWG3MD = 1;
-    CWG2MD = 1;
-    CWG1MD = 1;
-    U2MD   = 1;
-    I2C2MD = 1;
-    I2C1MD = 1;
-    SMT1MD = 1;
-    CLC4MD = 1;
-    CLC3MD = 1;
-    CLC2MD = 1;
-    CLC1MD = 1;
-    DSMMD  = 1;
-    DMA2MD = 1;
-    DMA1MD = 1;
-
-    //Device enters Sleep mode on SLEEP instruction
-    IDLEN = 0;
-    
-    // Configure as output all unused port pins and set them to low
-    //PORT A
-    TRISAbits.TRISA0 = OUTPUT;
-    TRISAbits.TRISA1 = OUTPUT;
-    TRISAbits.TRISA4 = OUTPUT;
-    TRISAbits.TRISA5 = OUTPUT;
-    TRISAbits.TRISA6 = OUTPUT;
-    TRISAbits.TRISA7 = OUTPUT;
-    LATAbits.LATA0 = LOW;
-    LATAbits.LATA1 = LOW;
-    LATAbits.LATA4 = LOW;
-    LATAbits.LATA5 = LOW;
-    LATAbits.LATA6 = LOW;
-    LATAbits.LATA7 = LOW;
-    
-}
 
 uint8_t LoRa_CanSleep(void) 
 {
@@ -640,7 +528,7 @@ void LoRaWakeUp(void)
 //    UART1_Initialize();
 }
 
-void readAndSend(void)
+LorawanError_t readAndSend(void)
 {
     data.temperature=getTemperature();
     
@@ -653,6 +541,7 @@ void readAndSend(void)
 //    if(err!=OK) print_error(err);
     err=LORAWAN_Send(CNF, 2, &data, sizeof(data));
     if(err!=OK) print_error(err);
+    return err;
 }
 /**
  End of File

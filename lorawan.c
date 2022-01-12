@@ -103,7 +103,7 @@ static uint8_t PrepareJoinRequestFrame (void);
 
 static uint8_t PrepareJoinAcceptFrame (uint8_t dev_number);
 
-static void PrepareSessionKeys (uint8_t* sessionKey, uint8_t* appNonce, uint8_t* networkId, uint8_t* joinNonce);
+static void PrepareSessionKeys (uint8_t* sessionKey, uint8_t* appNonce, uint8_t* networkId, uint16_t* joinNonce);
 
 static void DeviceComputeSessionKeys (JoinAccept_t *joinAcceptBuffer);
 
@@ -272,6 +272,13 @@ LorawanError_t LORAWAN_Send (TransmissionType_t confirmed, uint8_t port,  void *
         }
         
         AssemblePacket (confirmed, port, buffer, bufferLength);
+        uint8_t len=(uint8_t)loRa.lastPacketLength;
+        printVar("Transmit: len=",PAR_UI8,&len,false,true);
+        for(uint8_t k=16;k<loRa.lastPacketLength+16;k++)
+        {
+            printVar(" ",PAR_UI8,&macBuffer[k],true,false);
+        }
+        send_chars("\r\n");
 
         if (RADIO_Transmit (&macBuffer[16], (uint8_t)loRa.lastPacketLength) == OK)
         {
@@ -1360,8 +1367,6 @@ LorawanError_t LORAWAN_RxDone (uint8_t *buffer, uint8_t bufferLength)
 
             UpdateJoinSuccessState(0);
             
-            loRa.devNonce++;
-            put_DevNonce(jsnumber, loRa.devNonce);
             loRa.fCntUp.value = 0;   // uplink counter becomes 0
             loRa.fCntDown.value = 0; // downlink counter becomes 0              
 
@@ -1537,6 +1542,7 @@ LorawanError_t LORAWAN_RxDone (uint8_t *buffer, uint8_t bufferLength)
                 else if (RX1_OPEN == loRa.macStatus.macState)
                 {
                     SwTimerStop (loRa.receiveWindow2TimerId);
+                    send_chars("Stop RW2\r\n");
                 }
 
                 buffer = buffer + 8; // TODO: magic number
@@ -1608,8 +1614,18 @@ LorawanError_t LORAWAN_RxDone (uint8_t *buffer, uint8_t bufferLength)
             //  frame counter check, frame counter received should be less than last frame counter received, otherwise it  was an overflow
             if (hdr->members.fCnt >= loRa.fCntDown.members.valueLow)
             {
-                if ((hdr->members.fCnt - loRa.fCntDown.members.valueLow) > loRa.protocolParameters.maxFcntGap) //if this difference is greater than the value of max_fct_gap then too many data frames have been lost then subsequesnt will be discarded
+                uint16_t s=hdr->members.fCnt - loRa.fCntDown.members.valueLow;
+                if(s>loRa.protocolParameters.maxFcntGap)
+//                if ((hdr->members.fCnt - loRa.fCntDown.members.valueLow) > loRa.protocolParameters.maxFcntGap) //if this difference is greater than the value of max_fct_gap then too many data frames have been lost then subsequesnt will be discarded
                 {
+                    uint32_t hdr_fcnt=hdr->members.fCnt;
+                    uint32_t lora_fcnt=loRa.fCntDown.members.valueLow;
+                    uint32_t maxgap=loRa.protocolParameters.maxFcntGap;
+                    uint32_t s32=s;
+                    printVar("s=",PAR_UI32,&s32,true,false);
+                    printVar(" maxgap=",PAR_UI32,&maxgap,true,false);
+                    printVar(" hdr_fcnt=",PAR_UI32,&hdr_fcnt,true,false);
+                    printVar(" lora_fcnt=",PAR_UI32,&lora_fcnt,true,true);
                     loRa.lorawanMacStatus.ackRequiredFromNextDownlinkMessage = 0; // reset the flag
                     loRa.macStatus.macState = IDLE;
                     if (rxPayload.RxAppData != NULL)
@@ -1626,6 +1642,7 @@ LorawanError_t LORAWAN_RxDone (uint8_t *buffer, uint8_t bufferLength)
                         loRa.macStatus.macState = CLASS_C_RX2_2_OPEN;
                         LORAWAN_EnterContinuousReceive();
                     }
+                    send_chars("FRAME_COUNTER_ERROR_REJOIN_NEEDED\r\n");
                     return FRAME_COUNTER_ERROR_REJOIN_NEEDED;
                 }
                 else
@@ -1664,6 +1681,7 @@ LorawanError_t LORAWAN_RxDone (uint8_t *buffer, uint8_t bufferLength)
                     loRa.macStatus.macState = CLASS_C_RX2_2_OPEN;
                     LORAWAN_EnterContinuousReceive();
                 }
+                send_chars("FRAME_COUNTER_ERROR_REJOIN_NEEDED_1\r\n");
                 return FRAME_COUNTER_ERROR_REJOIN_NEEDED;
             }
             send_chars("fcnt OK\r\n");
@@ -1672,6 +1690,7 @@ LorawanError_t LORAWAN_RxDone (uint8_t *buffer, uint8_t bufferLength)
             if (loRa.macStatus.macState == RX1_OPEN)
             {
                 SwTimerStop (loRa.receiveWindow2TimerId);
+                send_chars("Stop RW2\r\n");
             }
 
             loRa.counterRepetitionsUnconfirmedUplink = 1; // this is a guard for LORAWAN_RxTimeout, for any packet that is received, the last uplink packet should not be retransmitted
@@ -2620,7 +2639,7 @@ static void UpdateJoinInProgress(uint8_t state)
     loRa.macStatus.macState = state;
 }
 
-static void PrepareSessionKeys (uint8_t* sessionKey, uint8_t* joinNonce, uint8_t* networkId, uint8_t* devNonce)
+static void PrepareSessionKeys (uint8_t* sessionKey, uint8_t* joinNonce, uint8_t* networkId, uint16_t* devNonce)
 {
     uint8_t index = 0;
 
@@ -2634,7 +2653,9 @@ static void PrepareSessionKeys (uint8_t* sessionKey, uint8_t* joinNonce, uint8_t
     index = index + JA_NET_ID_SIZE;
 
 //    memcpy(&sessionKey[index], &loRa.devNonce, sizeof(loRa.devNonce) );
-    memcpy(&sessionKey[index], devNonce, JA_DEV_NONCE_SIZE );
+// DevNonce - value for next Join Request, calculate current DevNonce
+    uint16_t currentDevNonce=*devNonce-1;
+    memcpy(&sessionKey[index], &currentDevNonce, JA_DEV_NONCE_SIZE );
 
 }
 
@@ -2643,10 +2664,12 @@ static void DeviceComputeSessionKeys (JoinAccept_t *joinAcceptBuffer)
     PrepareSessionKeys(loRa.activationParameters.applicationSessionKey, joinAcceptBuffer->members.joinNonce, joinAcceptBuffer->members.networkId, &loRa.devNonce);
     loRa.activationParameters.applicationSessionKey[0] = 0x02; // used for Network Session Key
     AESEncodeLoRa(loRa.activationParameters.applicationSessionKey, loRa.activationParameters.applicationKey);
+    printVar("APPSKey",PAR_KEY128,&loRa.activationParameters.applicationSessionKey,true,true);
 
     PrepareSessionKeys(loRa.activationParameters.networkSessionKey, joinAcceptBuffer->members.joinNonce, joinAcceptBuffer->members.networkId, &loRa.devNonce);
     loRa.activationParameters.networkSessionKey[0] = 0x01; // used for Network Session Key
     AESEncodeLoRa(loRa.activationParameters.networkSessionKey, loRa.activationParameters.applicationKey);
+    printVar("NWKSKey",PAR_KEY128,&loRa.activationParameters.networkSessionKey,true,true);
 }
 
 /*static void NetworkComputeSessionKeys (uint8_t dn)

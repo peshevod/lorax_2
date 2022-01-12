@@ -45,6 +45,7 @@
       <itemPath>lorawan_types.h</itemPath>
       <itemPath>measurements.h</itemPath>
       <itemPath>sensors.h</itemPath>
+      <itemPath>sleep.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -88,6 +89,7 @@
       <itemPath>eeprom.c</itemPath>
       <itemPath>measurements.c</itemPath>
       <itemPath>sensors.c</itemPath>
+      <itemPath>sleep.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

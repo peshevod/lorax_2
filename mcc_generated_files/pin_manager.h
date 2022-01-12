@@ -165,29 +165,45 @@
 #define DIO2_SetAnalogMode()      do { ANSELBbits.ANSELB0 = 1; } while(0)
 #define DIO2_SetDigitalMode()     do { ANSELBbits.ANSELB0 = 0; } while(0)
 
-// get/set RB1 procedures
-#define RB1_SetHigh()            do { LATBbits.LATB1 = 1; } while(0)
-#define RB1_SetLow()             do { LATBbits.LATB1 = 0; } while(0)
-#define RB1_Toggle()             do { LATBbits.LATB1 = ~LATBbits.LATB1; } while(0)
-#define RB1_GetValue()              PORTBbits.RB1
-#define RB1_SetDigitalInput()    do { TRISBbits.TRISB1 = 1; } while(0)
-#define RB1_SetDigitalOutput()   do { TRISBbits.TRISB1 = 0; } while(0)
-#define RB1_SetPullup()             do { WPUBbits.WPUB1 = 1; } while(0)
-#define RB1_ResetPullup()           do { WPUBbits.WPUB1 = 0; } while(0)
-#define RB1_SetAnalogMode()         do { ANSELBbits.ANSELB1 = 1; } while(0)
-#define RB1_SetDigitalMode()        do { ANSELBbits.ANSELB1 = 0; } while(0)
+// get/set DIO1 aliases
+#define DIO1_TRIS                 TRISBbits.TRISB1
+#define DIO1_LAT                  LATBbits.LATB1
+#define DIO1_PORT                 PORTBbits.RB1
+#define DIO1_WPU                  WPUBbits.WPUB1
+#define DIO1_OD                   ODCONBbits.ODCB1
+#define DIO1_ANS                  ANSELBbits.ANSELB1
+#define DIO1_SetHigh()            do { LATBbits.LATB1 = 1; } while(0)
+#define DIO1_SetLow()             do { LATBbits.LATB1 = 0; } while(0)
+#define DIO1_Toggle()             do { LATBbits.LATB1 = ~LATBbits.LATB1; } while(0)
+#define DIO1_GetValue()           PORTBbits.RB1
+#define DIO1_SetDigitalInput()    do { TRISBbits.TRISB1 = 1; } while(0)
+#define DIO1_SetDigitalOutput()   do { TRISBbits.TRISB1 = 0; } while(0)
+#define DIO1_SetPullup()          do { WPUBbits.WPUB1 = 1; } while(0)
+#define DIO1_ResetPullup()        do { WPUBbits.WPUB1 = 0; } while(0)
+#define DIO1_SetPushPull()        do { ODCONBbits.ODCB1 = 0; } while(0)
+#define DIO1_SetOpenDrain()       do { ODCONBbits.ODCB1 = 1; } while(0)
+#define DIO1_SetAnalogMode()      do { ANSELBbits.ANSELB1 = 1; } while(0)
+#define DIO1_SetDigitalMode()     do { ANSELBbits.ANSELB1 = 0; } while(0)
 
-// get/set RB2 procedures
-#define RB2_SetHigh()            do { LATBbits.LATB2 = 1; } while(0)
-#define RB2_SetLow()             do { LATBbits.LATB2 = 0; } while(0)
-#define RB2_Toggle()             do { LATBbits.LATB2 = ~LATBbits.LATB2; } while(0)
-#define RB2_GetValue()              PORTBbits.RB2
-#define RB2_SetDigitalInput()    do { TRISBbits.TRISB2 = 1; } while(0)
-#define RB2_SetDigitalOutput()   do { TRISBbits.TRISB2 = 0; } while(0)
-#define RB2_SetPullup()             do { WPUBbits.WPUB2 = 1; } while(0)
-#define RB2_ResetPullup()           do { WPUBbits.WPUB2 = 0; } while(0)
-#define RB2_SetAnalogMode()         do { ANSELBbits.ANSELB2 = 1; } while(0)
-#define RB2_SetDigitalMode()        do { ANSELBbits.ANSELB2 = 0; } while(0)
+// get/set DIO0 aliases
+#define DIO0_TRIS                 TRISBbits.TRISB2
+#define DIO0_LAT                  LATBbits.LATB2
+#define DIO0_PORT                 PORTBbits.RB2
+#define DIO0_WPU                  WPUBbits.WPUB2
+#define DIO0_OD                   ODCONBbits.ODCB2
+#define DIO0_ANS                  ANSELBbits.ANSELB2
+#define DIO0_SetHigh()            do { LATBbits.LATB2 = 1; } while(0)
+#define DIO0_SetLow()             do { LATBbits.LATB2 = 0; } while(0)
+#define DIO0_Toggle()             do { LATBbits.LATB2 = ~LATBbits.LATB2; } while(0)
+#define DIO0_GetValue()           PORTBbits.RB2
+#define DIO0_SetDigitalInput()    do { TRISBbits.TRISB2 = 1; } while(0)
+#define DIO0_SetDigitalOutput()   do { TRISBbits.TRISB2 = 0; } while(0)
+#define DIO0_SetPullup()          do { WPUBbits.WPUB2 = 1; } while(0)
+#define DIO0_ResetPullup()        do { WPUBbits.WPUB2 = 0; } while(0)
+#define DIO0_SetPushPull()        do { ODCONBbits.ODCB2 = 0; } while(0)
+#define DIO0_SetOpenDrain()       do { ODCONBbits.ODCB2 = 1; } while(0)
+#define DIO0_SetAnalogMode()      do { ANSELBbits.ANSELB2 = 1; } while(0)
+#define DIO0_SetDigitalMode()     do { ANSELBbits.ANSELB2 = 0; } while(0)
 
 // get/set NRESET aliases
 #define NRESET_TRIS                 TRISBbits.TRISB3

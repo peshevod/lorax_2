@@ -50,6 +50,7 @@ volatile uint8_t timerOverflow = 0;
 volatile uint32_t ticksToScheduledInterrupt = 0xFFFFFFFFU;
 volatile uint16_t reloadVal = 0;
 volatile uint32_t ticksAdded = 0;
+volatile uint32_t ticksNCO=0;
 
 void TMR_ISR_Lora_Init(void)
 {

@@ -40,7 +40,7 @@
 
 #include "radio_registers_SX1276.h"
 #include "radio_driver_SX1276.h"
-#include "lorawan_defs.h"
+#include "lorawan_types.h"
 #include "radio_driver_hal.h"
 #include "lorax_radio.h"
 #include "sw_timer.h"
@@ -78,11 +78,10 @@ extern uint8_t rssi_off;
 extern uint8_t mode;
 extern uint32_t bandwidth;
 extern uint8_t spread_factor;
-uint8_t rectimer;
 uint32_t rectimer_value, delta, ticks, ticks_old;
 extern Data_t data;
 int32_t rx1_offset;
-
+extern LoRa_t loRa;
 
 void RADIO_RegisterWrite(uint8_t reg, uint8_t value)
 {
@@ -128,7 +127,7 @@ static void RADIO_WriteMode(RadioMode_t newMode, RadioModulation_t newModulation
     RadioModulation_t currentModulation;
     RadioMode_t currentMode;
 
-    PIE0bits.IOCIE = 0;
+    IOCCPbits.IOCCP5 = 0;
     
     if ((MODULATION_FSK == newModulation) &&
         ((MODE_RXSINGLE == newMode) || (MODE_CAD == newMode)))
@@ -201,7 +200,7 @@ static void RADIO_WriteMode(RadioMode_t newMode, RadioModulation_t newModulation
                 dioMapping &= ~0x30;    // DIO5 = 00 means ModeReady in LoRa mode
             }
             RADIO_RegisterWrite(REG_DIOMAPPING2, dioMapping);
-            if(MODULATION_LORA == newModulation) PIE0bits.IOCIE = 1;
+            if(MODULATION_LORA == newModulation) IOCCPbits.IOCCP5 = 1;
         }
 
         // Do the actual mode switch.
@@ -460,10 +459,10 @@ void RADIO_Init(uint8_t *radioBuffer, uint32_t frequency)
     set_s("FSK_AFC_BW",&RadioConfiguration.afcBw); // = FSKBW_83_3KHZ;
     RadioConfiguration.fhssNextFrequency = NULL;
     
-    rectimer=SwTimerCreate();
+//    rectimer=SwTimerCreate();
     rectimer_value=86400000;
-    SwTimerSetTimeout(rectimer,MS_TO_TICKS(rectimer_value));
-    SwTimerStart(rectimer);
+    SwTimerSetTimeout(loRa.rectimer,MS_TO_TICKS(rectimer_value));
+    SwTimerStart(loRa.rectimer);
     delta=0;
     ticks=0;
     ticks_old=0;
@@ -1012,9 +1011,9 @@ static void RADIO_RxDone(void)
         // Read CRC info from received packet header
         i = RADIO_RegisterRead(REG_LORA_HOPCHANNEL);
         SwTimersInterrupt();
-        if(SwTimerIsRunning(rectimer))
+        if(SwTimerIsRunning(loRa.rectimer))
         {
-            ticks=MS_TO_TICKS(rectimer_value)-SwTimerReadValue(rectimer);
+            ticks=MS_TO_TICKS(rectimer_value)-SwTimerReadValue(loRa.rectimer);
             delta=TICKS_TO_MS(ticks-ticks_old);
             ticks_old=ticks;
             data.rssi=RADIO_RegisterRead(REG_LORA_PKTRSSIVALUE);

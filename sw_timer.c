@@ -48,17 +48,9 @@
 
 #define TIMER_CORRECTION_TICKS          32
 
-typedef struct
-{
-    uint32_t ticksRemaining;
-    uint8_t running;
-    uint8_t callbackParameter;
-    void (*callback)(uint8_t);
-} SwTimer_t;
-
-volatile static SwTimer_t swTimers[MAX_TIMERS];
-volatile static uint8_t allocatedTimers;
-volatile static uint32_t ticksAccounted;
+volatile SwTimer_t swTimers[MAX_TIMERS];
+volatile uint8_t allocatedTimers;
+volatile uint32_t ticksAccounted;
 
 
 // This function needs to be called with interrupts stopped, shortly after
@@ -109,6 +101,8 @@ uint32_t TMR_GetDeltaTime(void)
         retVal = tmrVal - reloadVal - ticksAccounted + ticksAdded;
         ticksAccounted += retVal;
     }
+    retVal+=ticksNCO;
+    ticksNCO=0;
 
     return retVal;
 }
@@ -235,7 +229,7 @@ void SwTimerStart(uint8_t timerId)
     INTERRUPT_GlobalInterruptEnable();
 }
 
-void SwTimerStartNew(uint8_t newtimerId,uint8_t oldtimerId, uint32_t delta)
+/*void SwTimerStartNew(uint8_t newtimerId,uint8_t oldtimerId, uint32_t delta)
 {
     uint32_t ticksRemaining;
     // Need to synchronize all timers
@@ -252,7 +246,7 @@ void SwTimerStartNew(uint8_t newtimerId,uint8_t oldtimerId, uint32_t delta)
     TMR_OverrideRemaining(ticksRemaining);
     swTimers[newtimerId].running = 1;
     INTERRUPT_GlobalInterruptEnable();
-}
+}*/
 
 void SwTimerStop(uint8_t timerId)
 {

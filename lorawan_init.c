@@ -46,11 +46,13 @@ void DIO5_ISR_Lora_Init(void);
 void DIO0_ISR_Lora_Init(void)
 {
     INT0_SetInterruptHandler(DIO0_ISR_Lora);
+//    IOCBF2_SetInterruptHandler(DIO0_ISR_Lora);
 }
 
 void DIO1_ISR_Lora_Init(void)
 {
     INT1_SetInterruptHandler(DIO1_ISR_Lora);
+//    IOCBF1_SetInterruptHandler(DIO1_ISR_Lora);
 }
 
 void DIO2_ISR_Lora_Init(void)
@@ -81,8 +83,6 @@ void LORAWAN_PlatformInit(void)
     DIO3_ISR_Lora_Init();
     DIO4_ISR_Lora_Init();
     DIO5_ISR_Lora_Init();
-    SPI_Open(SPI_DEFAULT);
-
 }
 /**
  End of File

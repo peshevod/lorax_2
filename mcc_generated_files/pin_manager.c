@@ -154,7 +154,7 @@ void PIN_MANAGER_Initialize(void)
     //interrupt on change for group IOCCN - negative
     IOCCNbits.IOCCN5 = 0;
     //interrupt on change for group IOCCP - positive
-    IOCCPbits.IOCCP5 = 1;
+    IOCCPbits.IOCCP5 = 0;
 
 
 
@@ -166,7 +166,7 @@ void PIN_MANAGER_Initialize(void)
     IOCCF5_SetInterruptHandler(IOCCF5_DefaultInterruptHandler);
    
     // Enable IOCI interrupt 
-    PIE0bits.IOCIE = 0; 
+    PIE0bits.IOCIE = 1; 
     
 	
     SPI1SCKPPS = 0x14;   //RC4->SPI1:SCK1;    
