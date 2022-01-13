@@ -74,7 +74,7 @@ extern "C" {
 //RU channels for 868 Mhz
 #define LC0_RU864                 {868900000, ENABLED,  { ( ( DR5 << SHIFT4 ) | DR0 ) },   9, 0, 1, 0xFF}
 #define LC1_RU864                 {869100000, ENABLED,  { ( ( DR5 << SHIFT4 ) | DR0 ) },   9, 0, 1, 0xFF}
-#define LC2_RU864                 {864100000, ENABLED,  { ( ( DR5 << SHIFT4 ) | DR0 ) },   99, 0, 1, 0xFF}
+#define LC2_RU864                 {864100000, ENABLED,  { ( ( DR5 << SHIFT4 ) | DR0 ) },   999, 0, 1, 0xFF}
 #define LC3_RU864                 {864300000, ENABLED,  { ( ( DR5 << SHIFT4 ) | DR0 ) },   999, 0, 1, 0xFF}
 #define LC4_RU864                 {864500000, ENABLED,  { ( ( DR5 << SHIFT4 ) | DR0 ) },   999, 0, 1, 0xFF}
 #define LC5_RU864                 {864700000, ENABLED,  { ( ( DR5 << SHIFT4 ) | DR0 ) },   999, 0, 1, 0xFF}

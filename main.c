@@ -232,6 +232,11 @@ void print_array(void)
 }
 void print_error(LorawanError_t err)
 {
+    if(err==NO_CHANNELS_FOUND)
+    {
+        send_chars("Waiting for begin of channel duty cycle\r\n");
+        return;
+    }
     send_chars("Error ");
     send_chars(errors[err]);
     send_chars("(");
@@ -345,6 +350,8 @@ void main(void)
             break;
         case MODE_DEVICE:
             send_chars("Device\r\n");
+            JoinIntervalTimerId=SwTimerCreate();
+            pauseTimerId=SwTimerCreate();
             TMR3_SetInterruptHandler(handle16sInterrupt);
 //            SysConfigSleep();
     
@@ -364,7 +371,6 @@ void main(void)
 //            LORAWAN_SetChannelIdStatus (1, DISABLED);
     
             // Wait for Join response
-            JoinIntervalTimerId=SwTimerCreate();
             
             SwTimerSetCallback(JoinIntervalTimerId,StartJoinProcedure,0);
             StartJoinProcedure(0);
@@ -384,10 +390,7 @@ void main(void)
 
             // Application main loop
             LorawanError_t err;
-            pauseTimerId=SwTimerCreate();
-            uint8_t lastPauseEnded=pauseEnded;
             SwTimerSetCallback(pauseTimerId, pauseCallback, 0);
-            SwTimerSetTimeout(pauseTimerId, MS_TO_TICKS(1000));
             while (1)
             {   
                 // Stack management
@@ -410,6 +413,7 @@ void main(void)
                     else if(err==NO_CHANNELS_FOUND)
                     {
                         pauseEnded=0;
+                        SwTimerSetTimeout(pauseTimerId, MS_TO_TICKS(1000));
                         SwTimerStart(pauseTimerId);
                     }
                 }

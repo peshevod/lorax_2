@@ -272,13 +272,13 @@ LorawanError_t LORAWAN_Send (TransmissionType_t confirmed, uint8_t port,  void *
         }
         
         AssemblePacket (confirmed, port, buffer, bufferLength);
-        uint8_t len=(uint8_t)loRa.lastPacketLength;
+/*        uint8_t len=(uint8_t)loRa.lastPacketLength;
         printVar("Transmit: len=",PAR_UI8,&len,false,true);
         for(uint8_t k=16;k<loRa.lastPacketLength+16;k++)
         {
             printVar(" ",PAR_UI8,&macBuffer[k],true,false);
         }
-        send_chars("\r\n");
+        send_chars("\r\n");*/
 
         if (RADIO_Transmit (&macBuffer[16], (uint8_t)loRa.lastPacketLength) == OK)
         {
@@ -1616,7 +1616,7 @@ LorawanError_t LORAWAN_RxDone (uint8_t *buffer, uint8_t bufferLength)
             {
                 uint16_t s=hdr->members.fCnt - loRa.fCntDown.members.valueLow;
                 if(s>loRa.protocolParameters.maxFcntGap)
-//                if ((hdr->members.fCnt - loRa.fCntDown.members.valueLow) > loRa.protocolParameters.maxFcntGap) //if this difference is greater than the value of max_fct_gap then too many data frames have been lost then subsequesnt will be discarded
+//                if ( ((uint16_t)hdr->members.fCnt - (uint16_t)loRa.fCntDown.members.valueLow ) > (uint16_t)loRa.protocolParameters.maxFcntGap) //if this difference is greater than the value of max_fct_gap then too many data frames have been lost then subsequesnt will be discarded
                 {
                     uint32_t hdr_fcnt=hdr->members.fCnt;
                     uint32_t lora_fcnt=loRa.fCntDown.members.valueLow;
@@ -1690,7 +1690,7 @@ LorawanError_t LORAWAN_RxDone (uint8_t *buffer, uint8_t bufferLength)
             if (loRa.macStatus.macState == RX1_OPEN)
             {
                 SwTimerStop (loRa.receiveWindow2TimerId);
-                send_chars("Stop RW2\r\n");
+//                send_chars("Stop RW2\r\n");
             }
 
             loRa.counterRepetitionsUnconfirmedUplink = 1; // this is a guard for LORAWAN_RxTimeout, for any packet that is received, the last uplink packet should not be retransmitted

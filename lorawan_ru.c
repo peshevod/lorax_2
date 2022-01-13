@@ -458,6 +458,7 @@ void LORAWAN_TxDone(uint16_t timeOnAir)
                 SwTimerSetTimeout(loRa.joinAccept2TimerId, MS_TO_TICKS_SHORT(loRa.protocolParameters.joinAcceptDelay2 + rxWindowOffset[loRa.receiveWindow2Parameters.dataRate]));
                 SwTimerStart(loRa.joinAccept1TimerId);
                 SwTimerStart(loRa.joinAccept2TimerId);
+//                SwTimersInterrupt();
 
                 Channels[i].channelTimer = ((uint32_t)timeOnAir) * (((uint32_t)DUTY_CYCLE_JOIN_REQUEST + 1) * ((uint32_t)loRa.prescaler) - 1); 
                 loRa.devNonce++;
@@ -465,17 +466,25 @@ void LORAWAN_TxDone(uint16_t timeOnAir)
             }
             else
             {
-                SwTimerSetTimeout(loRa.receiveWindow1TimerId, MS_TO_TICKS_SHORT(loRa.protocolParameters.receiveDelay1 + rx1_offset+ rxWindowOffset[loRa.receiveWindow1Parameters.dataRate]));
-                send_chars("rec after ");
-                send_chars(ui32toa((uint32_t)(loRa.protocolParameters.receiveDelay1 + rx1_offset + rxWindowOffset[loRa.receiveWindow1Parameters.dataRate]),b));
-                send_chars(" ms\r\n");
-                SwTimerSetTimeout(loRa.receiveWindow2TimerId, MS_TO_TICKS_SHORT(loRa.protocolParameters.receiveDelay2 + rxWindowOffset[loRa.receiveWindow2Parameters.dataRate]));
+                
+//                uint32_t d1=loRa.protocolParameters.receiveDelay1 + rx1_offset+ rxWindowOffset[loRa.receiveWindow1Parameters.dataRate];
+//                uint32_t d2_32=loRa.protocolParameters.receiveDelay2;
+//                uint32_t d2=(uint32_t)loRa.protocolParameters.receiveDelay2 + (int32_t)rxWindowOffset[loRa.receiveWindow2Parameters.dataRate];
+                SwTimerSetTimeout(loRa.receiveWindow1TimerId, MS_TO_TICKS_SHORT((uint32_t)loRa.protocolParameters.receiveDelay1 + (int32_t)rx1_offset+ (int32_t)rxWindowOffset[loRa.receiveWindow1Parameters.dataRate]));
+                SwTimerSetTimeout(loRa.receiveWindow2TimerId, MS_TO_TICKS_SHORT((uint32_t)loRa.protocolParameters.receiveDelay2 + (int32_t)rxWindowOffset[loRa.receiveWindow2Parameters.dataRate]));
+//                printVar("receiveDelay2=",PAR_UI32,&d2_32,false,true);
+//                send_chars("rec1 after ");
+//                send_chars(ui32toa(d1,b));
+//                send_chars(" ms   ");
+//                send_chars("rec2 after ");
+//                send_chars(ui32toa(d2,b));
+//                send_chars(" ms\r\n");
                 SwTimerStart(loRa.receiveWindow1TimerId);
                 if (CLASS_A == loRa.deviceClass)
                 {
                     SwTimerStart(loRa.receiveWindow2TimerId);
                 }
-                SwTimersInterrupt();
+//                SwTimersInterrupt();
 
                 Channels[i].channelTimer = ((uint32_t)timeOnAir) * (((uint32_t)Channels[i].dutyCycle + 1) * ((uint32_t)loRa.prescaler) - 1);
             }
@@ -881,8 +890,8 @@ LorawanError_t SearchAvailableChannel (uint8_t maxChannels, bool transmissionTyp
     set_s("CHANNEL",&i);
     if(i!=0xFF)
     {
-        printVar("Search channel= ",PAR_UI8,&i,false,true);
-        printVar("channelTimer= ",PAR_UI32,&Channels[i].channelTimer,false,true);
+//        printVar("Search channel= ",PAR_UI8,&i,false,true);
+//        printVar("channelTimer= ",PAR_UI32,&Channels[i].channelTimer,false,true);
         if ( ( Channels[i].status == ENABLED ) && ( Channels[i].channelTimer == 0 ) && ( loRa.currentDataRate >= Channels[i].dataRange.min ) && ( loRa.currentDataRate <= Channels[i].dataRange.max ) )
         {
             if ( (!transmissionType && Channels[i].joinRequestChannel == 1) || transmissionType) // if transmissionType is join request, then check also for join request channels
@@ -1045,7 +1054,7 @@ LorawanError_t SelectChannelForTransmission (bool transmissionType)  // transmis
 
         ConfigureRadioTx(loRa.receiveWindow1Parameters.dataRate, loRa.receiveWindow1Parameters.frequency);
     }
-    else print_error(result);
+//    else print_error(result);
     return result;
 }
 
@@ -1375,7 +1384,7 @@ static void DutyCycleCallback (uint8_t param)
     bool found = false;
     uint8_t i;
 
-    send_chars("DCC\r\n");
+    send_chars("DutyCycleCallback\r\n");
     for (i=0; i < MAX_EU_SINGLE_BAND_CHANNELS; i++)
     {
         //Validate this only for enabled channels

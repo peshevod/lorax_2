@@ -486,8 +486,8 @@ void RADIO_Init(uint8_t *radioBuffer, uint32_t frequency)
         SwTimerStop(RadioConfiguration.fskRxWindowTimerId);
         SwTimerStop(RadioConfiguration.watchdogTimerId);
     }
-
-    RADIO_Reset();
+//  Assume reset was called before calling this function
+//    RADIO_Reset();
 
     // Perform image and RSSI calibration. This also puts the radio in FSK mode.
     // In order to perform image and RSSI calibration, we need the radio in
@@ -577,6 +577,7 @@ static void RADIO_WriteConfiguration(uint16_t symbolTimeout)
         printVar(" CRC=",PAR_UI8,&RadioConfiguration.crcOn,false,false);             
 
         // Handle frequency hopping, if necessary
+RadioConfiguration.frequencyHopPeriod=0;
         if (0 != RadioConfiguration.frequencyHopPeriod)
         {
             tempValue = RadioConfiguration.frequencyHopPeriod;
@@ -1251,6 +1252,7 @@ void RADIO_DIO0(void)
         switch (dioMapping)
         {
             case 0x00:
+//                send_chars("DIO0 RX\r\n");
                 RADIO_RxDone();
                 break;
             case 0x01:
@@ -1304,6 +1306,7 @@ void RADIO_DIO1(void)
         switch (dioMapping)
         {
             case 0x00:
+//                send_chars("DIO1 RXTimeout\r\n");
                 RADIO_RxTimeout();
                 break;
             case 0x01:

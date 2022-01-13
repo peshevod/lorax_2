@@ -17,13 +17,14 @@
 static volatile uint32_t rest, counter, counter0;
 static uint8_t ncol, ncoh, ncou, nco;
 extern volatile uint8_t sensor_event;
-extern volatile SwTimer_t swTimers[MAX_TIMERS];
-extern volatile uint8_t allocatedTimers;
-uint32_t runningTimers;
-extern ChannelParams_t Channels[MAX_RU_SINGLE_BAND_CHANNELS];
-static uint16_t timerVal;
+//extern volatile SwTimer_t swTimers[MAX_TIMERS];
+//extern volatile uint8_t allocatedTimers;
+//uint32_t runningTimers;
+//extern ChannelParams_t Channels[MAX_RU_SINGLE_BAND_CHANNELS];
+//static uint16_t timerVal;
 extern uint8_t radioBuffer[];
 uint8_t t_nreset;
+extern char b[128];
 
 static void compute_nco(uint32_t dt)
 {
@@ -172,7 +173,7 @@ void periph_permanent_on(void)
 
 static void periph_off(void)
 {
-    runningTimers=0;
+/*    runningTimers=0;
     uint32_t ptr=1;
     for(uint8_t k=0;k<allocatedTimers;k++)
     {
@@ -180,7 +181,7 @@ static void periph_off(void)
         ptr<<=1;
     }
     printVar("allocatedTimers=",PAR_UI8,&allocatedTimers,false,true);
-    printVar("runningTimers=",PAR_UI32,&runningTimers,true,true);
+    printVar("runningTimers=",PAR_UI32,&runningTimers,true,true);*/
 
     NRESET_SetLow();
     sensor_event=0;
@@ -250,7 +251,7 @@ static void periph_on(uint32_t interval)
     ticksNCO=interval*32768;
     ticksToScheduledInterrupt = SwTimersInterrupt();
     TMR1_StartTimer();
-    send_chars("TMR1 Start\r\n");
+//    send_chars("TMR1 Start\r\n");
     /*    for(uint8_t k=0;k<allocatedTimers;k++)
     {
         if(swTimers[k].running!=0)
@@ -259,13 +260,13 @@ static void periph_on(uint32_t interval)
             else swTimers[k].ticksRemaining-=interval*32768;
         }
     }*/
-    for(uint8_t k=0;k<MAX_RU_SINGLE_BAND_CHANNELS;k++)
+    /*for(uint8_t k=0;k<MAX_RU_SINGLE_BAND_CHANNELS;k++)
     {
         if(Channels[k].channelTimer<interval*1000) Channels[k].channelTimer=0;
         else Channels[k].channelTimer-=interval*1000;
-    }
+    }*/
     loRa.lastTimerValue+=interval*1000;
-    send_chars("Timers corrected\r\n");
+//    send_chars("Timers corrected\r\n");
     
     ADCMD=0; // ADCC
     ADCC_Initialize();
@@ -280,7 +281,9 @@ static void periph_on(uint32_t interval)
 void my_sleep(uint32_t interval)
 {
     uint8_t a;
-    send_chars("Entering sleep\n");
+    send_chars("Entering sleep ");
+    send_chars(ui32toa(interval,b));
+    send_chars("s.\r\n");
     periph_off();
     startNCO(interval);
     while(1)
@@ -291,7 +294,7 @@ void my_sleep(uint32_t interval)
         if(sensor_event || nco)
         {
             periph_on(interval);
-            send_chars("Returning from sleep\n");
+            send_chars("Returning from sleep\r\n");
             return;
         }
     }

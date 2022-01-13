@@ -64,9 +64,9 @@ int16_t getTemperature(void)
     }
     convertedValue = ADCC_GetFilterValue();
     x=convertedValue;
-    send_chars("convertedValue=");
+/*    send_chars("convertedValue=");
     send_chars(ui32toa(x,b));
-    send_chars("\r\n");
+    send_chars("\r\n");*/
     return (900-(x-vTSLR2)*vFVRA2X/4095*10000/2456);
 
 
