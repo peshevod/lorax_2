@@ -61,7 +61,7 @@ uint8_t radioBuffer[MAXIMUM_BUFFER_LENGTH];
 static uint8_t aesBuffer[AES_BLOCKSIZE];
 RxAppData_t rxPayload;
 //Profile_t devices[MAX_EEPROM_RECORDS];
-Profile_t joinServer;
+//Profile_t joinServer;
 extern uint8_t jsnumber;
 extern GenericEui_t deveui,joineui;
 //uint8_t dev_number;
@@ -1149,6 +1149,8 @@ void AckRetransmissionCallback (uint8_t param)
             }
             else if ( (loRa.counterRepetitionsConfirmedUplink > loRa.maxRepetitionsConfirmedUplink) && (loRa.macStatus.macPause == DISABLED) )
             {
+                loRa.macStatus.networkJoined=0;
+                loRa.lorawanMacStatus.joining=0;
                 ResetParametersForConfirmedTransmission ();
                 if (rxPayload.RxAppData != NULL)
                 {
@@ -1372,85 +1374,6 @@ LorawanError_t LORAWAN_RxDone (uint8_t *buffer, uint8_t bufferLength)
 
             return OK;
         }
-/*        else if ( (mhdr.bits.mType == FRAME_TYPE_JOIN_REQ) && (loRa.activationParameters.activationType == OTAA) )
-        {
-            printVar("Received Join Request Frame length=",PAR_UI8,&bufferLength,false,true);
-            
-            computedMic = ComputeMic (loRa.activationParameters.applicationKey, buffer, bufferLength - sizeof(extractedMic));
-            extractedMic = ExtractMic (buffer, bufferLength);
-            if (extractedMic != computedMic)
-            {
-                send_chars("BAD MIC\r\n");
-                SwTimerStop(loRa.virtualTimer);
-                SetJoinFailState();
-                return INVALID_PARAMETER;
-            }
-            send_chars("MIC OK\r\n");
-            JoinRequest_t *joinRequest;
-            joinRequest=(JoinRequest_t*)buffer;
-            printVar("Received Join EUI=",PAR_EUI64,&(joinRequest->members.JoinEui),true,true);
-            printVar("My Join EUI=",PAR_EUI64,&JoinEui,true,true);
-            if(euicmpr(&(joinRequest->members.JoinEui),&JoinEui))
-            {
-                SetJoinFailState();
-                SwTimerStop(loRa.virtualTimer);
-                return INVALID_PARAMETER;
-            }
-            bool found=false;
-            printVar("Received Device EUI=",PAR_EUI64,&(joinRequest->members.DevEui),true,true);
-            for(uint8_t j=0;j<number_of_devices;j++)
-            {
-                if(!euicmpr(&(joinRequest->members.DevEui),&(devices[j].Eui)))
-                {
-                    dev_number=j;
-                    printVar("Join Request from device ",PAR_UI8,&j,false,true);
-                    found=true;
-                    break;
-                }
-            }
-            if(!found)
-            {
-                SetJoinFailState();
-                SwTimerStop(loRa.virtualTimer);
-                return INVALID_PARAMETER;
-            }
-            int32_t dt;
-            set_s("RX1_OFFSET",&dt);
-            printVar("inbase devnonce=",PAR_UI32,&devices[dev_number].DevNonce,true,true);
-            printVar("received devnonce=",PAR_UI32,&joinRequest->members.devNonce,true,true);
-            if(joinRequest->members.devNonce>devices[dev_number].DevNonce)
-            {
-                devices[dev_number].DevNonce=joinRequest->members.devNonce;
-                put_DevNonce(devices[dev_number].js,devices[dev_number].DevNonce);
-            }
-            else
-            {
-                SwTimerStop(loRa.virtualTimer);
-                return DEVICE_DEVNONCE_ERROR;
-            }
-            *((uint16_t*)JoinNonce)=Random(UINT16_MAX);
-            JoinNonce[2]=(uint8_t)Random(UINT8_MAX);
-            //            getinc_JoinNonce(&JoinNonce);
-            NetworkComputeSessionKeys(dev_number);
-            devices[dev_number].DevAddr.value=get_nextDevAddr(&(DevAddr));
-            devices[dev_number].DlSettings.bits.rfu=0;
-            devices[dev_number].DlSettings.bits.rx1DROffset=0;
-            devices[dev_number].DlSettings.bits.rx2DataRate=DR0;
-            devices[dev_number].rxDelay=1;
-            devices[dev_number].fCntUp.value = 0;   // uplink counter becomes 0
-            devices[dev_number].fCntDown.value = 0; // downlink counter becomes 0              
-            devices[dev_number].status.states.joining = 0;  //join was done
-            devices[dev_number].status.states.joined = 1;   //network is joined
-            PrepareJoinAcceptFrame (dev_number);
-            loRa.macStatus.macState=IDLE;
-            devices[dev_number].macStatus.macState = BEFORE_TX1;
-            SwTimerStartNew(devices[dev_number].sendJoinAccept1TimerId,loRa.virtualTimer,MS_TO_TICKS(VIRTUAL_TIMER_TIMEOUT-loRa.protocolParameters.joinAcceptDelay1-dt));
-            
-            UpdateJoinSuccessState(dev_number);
-            
-            return OK;
-
-        }*/
         else if ( (mhdr.bits.mType == FRAME_TYPE_DATA_UNCONFIRMED_DOWN) || (mhdr.bits.mType == FRAME_TYPE_DATA_CONFIRMED_DOWN) )
         {
             loRa.crtMacCmdIndex = 0;   // clear the macCommands requests list
@@ -1811,105 +1734,6 @@ LorawanError_t LORAWAN_RxDone (uint8_t *buffer, uint8_t bufferLength)
                 LORAWAN_EnterContinuousReceive();
             }
         }
-/*        else if ( mhdr.bits.mType == FRAME_TYPE_DATA_UNCONFIRMED_UP || mhdr.bits.mType == FRAME_TYPE_DATA_CONFIRMED_UP )
-        {
-            Hdr_t *hdr;
-            hdr=(Hdr_t*)buffer;
-    //        send_chars("type OK\r\n");
-            bool found=false;
-            for(uint8_t j=0;j<number_of_devices;j++)
-            {
-                if (hdr->members.devAddr.value == devices[j].DevAddr.value)
-                {
-                    dev_number=j;
-                    printVar("Devaddr of device=",PAR_UI8,&j,false,true);
-                    SwTimerSetTimeout(devices[dev_number].sendWindow1TimerId,MS_TO_TICKS(loRa.protocolParameters.receiveDelay1));
-                    SwTimerStart(devices[dev_number].sendWindow1TimerId);
-                    found=true;
-                    break;
-                }
-            }
-            if(!devices[dev_number].macStatus.networkJoined) printVar("device not joined ",PAR_UI8,dev_number,false,true);
-                
-            if(!found || !devices[dev_number].macStatus.networkJoined)
-            {
-                printVar("Unknown devaddr=",PAR_UI32,&hdr->members.devAddr.value,true,true);
-                SwTimerStop(devices[dev_number].sendWindow1TimerId);
-                SetReceptionNotOkState();
-                loRa.macStatus.macState = IDLE;
-                return INVALID_PARAMETER;
-            }
-            //        send_chars("Address OK\r\n");
-            loRa.activationParameters.deviceAddress.value=hdr->members.devAddr.value;
-            AssembleEncryptionBlock (0, hdr->members.fCnt, bufferLength - sizeof (computedMic), 0x49, MCAST_DISABLED);
-            memcpy (&radioBuffer[0], aesBuffer, sizeof (aesBuffer));
-            memcpy (&radioBuffer[16], buffer, bufferLength-sizeof(computedMic));
-            AESCmac(devices[dev_number].NwkSKey, aesBuffer, &radioBuffer[0], bufferLength - sizeof(computedMic) + sizeof (aesBuffer));
-
-            memcpy(&computedMic, aesBuffer, sizeof(computedMic));
-            extractedMic = ExtractMic (&buffer[0], bufferLength);
-
-            // verify if the computed MIC is the same with the MIC piggybacked in the packet, if not ignore packet
-            if (computedMic != extractedMic)
-            {
-                send_chars("BAD MIC\r\n");
-                SwTimerStop(devices[dev_number].sendWindow1TimerId);
-                SetReceptionNotOkState();
-                return INVALID_PARAMETER;
-            }
-            send_chars("MIC OK\r\n");
-            if (hdr->members.fCnt >= devices[dev_number].fCntUp.members.valueLow)
-            {
-                if ((hdr->members.fCnt - devices[dev_number].fCntUp.members.valueLow) > loRa.protocolParameters.maxFcntGap) //if this difference is greater than the value of max_fct_gap then too many data frames have been lost then subsequesnt will be discarded
-                {
-                    devices[dev_number].lorawanMacStatus.ackRequiredFromNextDownlinkMessage = 0; // reset the flag
-                    if (rxPayload.RxAppData != NULL)
-                    {
-                        devices[dev_number].lorawanMacStatus.synchronization = 0; //clear the synchronization flag, because if the user will send a packet in the callback there is no need to send an empty packet
-                        rxPayload.RxAppData (NULL, 0, MAC_NOT_OK);
-                    }
-                    devices[dev_number].macStatus.rxDone = 0; 
-
-                    // Inform application about rejoin in status
-                    SwTimerStop(devices[dev_number].sendWindow1TimerId);
-                    devices[dev_number].macStatus.macState = IDLE;
-                    return FRAME_COUNTER_ERROR_REJOIN_NEEDED;
-                }
-                else
-                {
-                    devices[dev_number].fCntUp.members.valueLow = hdr->members.fCnt;  //frame counter received is OK, so the value received from the server is kept in sync with the value stored in the end device                    
-                }                
-            }
-            else
-            {                
-                if((hdr->members.fCnt == 0) && (devices[dev_number].fCntUp.members.valueLow == 0xFFFF))
-                {
-                    //Frame counter rolled over
-                    devices[dev_number].fCntUp.members.valueLow = hdr->members.fCnt;
-                    devices[dev_number].fCntUp.members.valueHigh ++;                    
-                }
-                else
-                {
-                    SetReceptionNotOkState();
-                    //Reject packet
-                    SwTimerStop(devices[dev_number].sendWindow1TimerId);
-                    devices[dev_number].macStatus.macState = IDLE;
-                    return INVALID_PARAMETER;
-                }
-            }             
-
-            if (devices[dev_number].fCntUp.value == UINT32_MAX)
-            {
-                // Inform application about rejoin in status
-                SwTimerStop(devices[dev_number].sendWindow1TimerId);
-                devices[dev_number].macStatus.macState = IDLE;
-                return FRAME_COUNTER_ERROR_REJOIN_NEEDED;
-            }
-            devices[dev_number].macStatus.macState = BEFORE_ACK;
-            loRa.macStatus.macState=IDLE;
-            send_chars("NSRxDone OK\r\n");
-            return OK;
-        }*/
         else
         {
             //if the mType is incorrect, set reception not OK state
@@ -1935,118 +1759,6 @@ LorawanError_t LORAWAN_RxDone (uint8_t *buffer, uint8_t bufferLength)
 
     return OK;
 }
-
-/*LorawanError_t LORAWAN_NSRxDone (uint8_t *buffer, uint8_t bufferLength)
-{
-    uint32_t computedMic, extractedMic;
-    Mhdr_t mhdr;
-    uint8_t fPort, bufferIndex, channelIndex;
-    uint8_t frmPayloadLength;
-    uint8_t *packet;
-    uint8_t temp;
-    int32_t rx1_offset;
-
-    set_s("RX1_OFFSET",&rx1_offset);
-//    SwTimerSetTimeout(loRa.sendDownAckTimerId, MS_TO_TICKS_SHORT(loRa.protocolParameters.receiveDelay1 + rxWindowOffset[loRa.receiveWindow1Parameters.dataRate]/2));
-
-    RADIO_ReleaseData();
-//    send_chars("NSRxDone in\r\n");
-    mhdr.value = buffer[0];
-    if ( mhdr.bits.mType == FRAME_TYPE_DATA_UNCONFIRMED_UP || mhdr.bits.mType == FRAME_TYPE_DATA_CONFIRMED_UP )
-    {
-        Hdr_t *hdr;
-        hdr=(Hdr_t*)buffer;
-//        send_chars("type OK\r\n");
-        for(uint8_t j=0;j<number_of_devices;j++)
-        if (hdr->members.devAddr.value == devices[j].DevAddr.value)
-        {
-            dev_number=j;
-            SwTimerSetTimeout(devices[dev_number].sendWindow1TimerId,MS_TO_TICKS(loRa.protocolParameters.receiveDelay1));
-            SwTimerStart(devices[dev_number].sendWindow1TimerId);
-        }
-        else
-        {
-            SetReceptionNotOkState();
-            return INVALID_PARAMETER;
-        }
-//        send_chars("Address OK\r\n");
-        AssembleEncryptionBlock (0, hdr->members.fCnt, bufferLength - sizeof (computedMic), 0x49, MCAST_DISABLED);
-        memcpy (&radioBuffer[0], aesBuffer, sizeof (aesBuffer));
-        memcpy (&radioBuffer[16], buffer, bufferLength-sizeof(computedMic));
-        AESCmac(loRa.activationParameters.networkSessionKey, aesBuffer, &radioBuffer[0], bufferLength - sizeof(computedMic) + sizeof (aesBuffer));
-
-        memcpy(&computedMic, aesBuffer, sizeof(computedMic));
-        extractedMic = ExtractMic (&buffer[0], bufferLength);
-
-        // verify if the computed MIC is the same with the MIC piggybacked in the packet, if not ignore packet
-        if (computedMic != extractedMic)
-        {
-            SwTimerStop(devices[dev_number].sendWindow1TimerId);
-            SetReceptionNotOkState();
-            return INVALID_PARAMETER;
-        }
-        //        send_chars("MIC OK\r\n");
-        if (hdr->members.fCnt >= loRa.fCntUp.members.valueLow)
-        {
-//            send_chars("rec fCnt=");
-//            send_chars(ui32toa((uint32_t)hdr->members.fCnt,b));
-//            send_chars(" in fCnt=");
-//            send_chars(ui32toa((uint32_t)loRa.fCntUp.members.valueLow,b));
-//            send_chars("\r\n");
-            
-            if ((hdr->members.fCnt - loRa.fCntUp.members.valueLow) > loRa.protocolParameters.maxFcntGap) //if this difference is greater than the value of max_fct_gap then too many data frames have been lost then subsequesnt will be discarded
-            {
-                loRa.lorawanMacStatus.ackRequiredFromNextDownlinkMessage = 0; // reset the flag
-                if (rxPayload.RxAppData != NULL)
-                {
-                    loRa.lorawanMacStatus.synchronization = 0; //clear the synchronization flag, because if the user will send a packet in the callback there is no need to send an empty packet
-                    rxPayload.RxAppData (NULL, 0, MAC_NOT_OK);
-                }
-                loRa.macStatus.rxDone = 0; 
-
-                // Inform application about rejoin in status
-                loRa.macStatus.rejoinNeeded = 1;
-                SwTimerStop(devices[dev_number].sendWindow1TimerId);
-                loRa.macStatus.macState = IDLE;
-                return FRAME_COUNTER_ERROR_REJOIN_NEEDED;
-            }
-            else
-            {
-                loRa.fCntUp.members.valueLow = hdr->members.fCnt;  //frame counter received is OK, so the value received from the server is kept in sync with the value stored in the end device                    
-            }                
-        }
-        else
-        {                
-            if((hdr->members.fCnt == 0) && (loRa.fCntUp.members.valueLow == 0xFFFF))
-            {
-                //Frame counter rolled over
-                loRa.fCntUp.members.valueLow = hdr->members.fCnt;
-                loRa.fCntUp.members.valueHigh ++;                    
-            }
-            else
-            {
-                SetReceptionNotOkState();
-                //Reject packet
-                SwTimerStop(devices[dev_number].sendWindow1TimerId);
-                loRa.macStatus.macState = IDLE;
-                return INVALID_PARAMETER;
-            }
-        }             
-
-        if (loRa.fCntUp.value == UINT32_MAX)
-        {
-            // Inform application about rejoin in status
-            loRa.macStatus.rejoinNeeded = 1;
-            SwTimerStop(devices[dev_number].sendWindow1TimerId);
-            loRa.macStatus.macState = IDLE;
-            return FRAME_COUNTER_ERROR_REJOIN_NEEDED;
-        }
-    }
-    loRa.lorawanMacStatus.ackRequiredFromNextUplinkMessage=DISABLED;
-    loRa.macStatus.macState = BEFORE_ACK;
-    send_chars("NSRxDone OK\r\n");
-    return OK;
-}*/
 
 static uint8_t LORAWAN_GetMaxPayloadSize (void)
 {
@@ -2554,7 +2266,7 @@ static bool FindSmallestDataRate (void)
     uint8_t  i = 0, dataRate;
     bool found = false;
 
-    if ((loRa.currentDataRate > loRa.minDataRate) && !(mode==MODE_SEND || mode==MODE_REC || mode==MODE_DEVICE))
+    if (loRa.currentDataRate > loRa.minDataRate)
     {
         dataRate = loRa.currentDataRate - 1;
 
@@ -2859,81 +2571,6 @@ uint8_t euicmpr(GenericEui_t* eui1, GenericEui_t* eui2)
     for(uint8_t j=0;j<8;j++) if( eui1->buffer[7-j] != eui2->buffer[j] ) return 1;
     return 0;
 }
-
-/*uint8_t selectJoinServer(Profile_t* joinServer)
-{
-    char joinName[9];
-    EEPROM_Data_t join_eeprom;
-    uint8_t jsnumber,js=0,found=0,foundk=0,kfree,jlast=0;
-//    printVar("before EEPROM_types=",PAR_UI32,&EEPROM_types,true,true);
-    set_s("JSNUMBER",&jsnumber);
-    strcpy(joinName,"JOIN0EUI");
-    for(uint8_t j=1;j<4;j++)
-    {
-        joinName[4]=0x30 + j;
-        set_s(joinName,&(joinServer->Eui));
-//         printVar("test j=",PAR_UI8,&j,false,false);
-//         printVar(" Eui=",PAR_EUI64,&(joinServer->Eui),true,true);
-        jlast=j;
-        if(euicmpnz(&(joinServer->Eui)))
-        {
-            found=0;
-            foundk=0;
-            for(uint8_t k=0;k<MAX_EEPROM_RECORDS;k++)
-            {
-                if(get_Eui(k,&join_eeprom)==1)
-                {
-                     if(!euicmp(&(joinServer->Eui),&(join_eeprom.Eui)) && get_EEPROM_type(k))
-                     {
-//                         printVar("found k=",PAR_UI8,&k,false,false);
-//                         printVar(" Eui=",PAR_EUI64,&(join_eeprom.Eui),true,true);
-                         found=1;
-                         if(jsnumber==j)
-                         {
-                             js=k;
-                             joinServer->DevNonce=get_DevNonce(js);
-//                             printVar("selected k=",PAR_UI8,&k,false,false);
-//                             printVar(" Eui=",PAR_EUI64,&(join_eeprom.Eui),true,true);
-                         };
-                         break;
-                     }
-                }
-                else
-                {
-                    if(!foundk)
-                    {
-                        foundk=1;
-                        kfree=k;
-                    }
-                }
-            }
-            if(!found && foundk)
-            {
-                put_Eui(kfree,&(joinServer->Eui));
-                joinServer->DevNonce=0;
-                put_DevNonce(kfree, joinServer->DevNonce);
-                set_EEPROM_type(kfree);
-//                 printVar("write kfree=",PAR_UI8,&kfree,false,false);
-//                 printVar(" Eui=",PAR_EUI64,&(joinServer->Eui),true,true);
-                if(jsnumber==j) 
-                {
-                    js=kfree;
-//                     printVar("selected kfree=",PAR_UI8,&kfree,false,false);
-//                     printVar(" Eui=",PAR_EUI64,&(joinServer->Eui),true,true);
-                }
-            }
-        }
-    }
-    if(jlast!=jsnumber)
-    {
-        get_Eui(js,&(joinServer->Eui));
-        joinServer->DevNonce=get_DevNonce(js);
-    }
-    joinServer->js=js;
-    printVar("selected JoinServer js=",PAR_UI8,&js,false,false);
-    printVar(" Eui=",PAR_EUI64,&(joinServer->Eui),true,true);
-    return js;
-}*/
 
 uint8_t LORAWAN_GetState(void)
 {

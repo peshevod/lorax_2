@@ -64,7 +64,7 @@
 /*
                          Main application
  */
-#define RESET                           0
+//#define RESET                           0
 #define ONE_HOUR_TIMEOUT_COUNTS         225
 
 uint8_t nwkSKey[16] = {0x2B, 0x7E, 0x15, 0x16, 0x28, 0xAE, 0xD2, 0xA6, 0xAB, 0xF7, 0x15, 0x88, 0x09, 0xCF, 0x4F, 0x3C};
@@ -112,7 +112,7 @@ extern uint8_t trace;
 uint8_t rssi_off;
 extern uint8_t mui[16];
 extern uint8_t js_number;
-extern Profile_t joinServer;
+//extern Profile_t joinServer;
 extern uint8_t number_of_devices;
 extern uint32_t NetID;
 extern uint8_t DevAddr[4];
@@ -121,6 +121,7 @@ extern LoRa_t loRa;
 Sensors_t sensors;
 volatile uint8_t pauseEnded=1;
 uint8_t pauseTimerId;
+extern uint32_t ch_wait;
 
 char* errors[] = {
     "OK",
@@ -142,7 +143,6 @@ char* errors[] = {
 
 void pauseCallback(uint8_t param)
 {
-    pauseEnded=1;
     SwTimerStop(pauseTimerId);
 }
 
@@ -255,22 +255,11 @@ void Transmit_array(void)
 
 void main(void)
 {
-    // Initialize the device
+    LorawanError_t err;    // Initialize the device
 //    SYSTEM_Initialize();
 //    NCO1CONbits.EN = 0;
     init_system();
-    // If using interrupts in PIC18 High/Low Priority Mode you need to enable the Global High and Low Interrupts
-    // If using interrupts in PIC Mid-Range Compatibility Mode you need to enable the Global Interrupts
-    // Use the following macros to:
-
-    // Enable the Global Interrupts
     INTERRUPT_GlobalInterruptEnable();
-
-    // Disable the Global Interrupts
-    //INTERRUPT_GlobalInterruptDisable();
-
-//    clear_uid();
-//    erase_EEPROM_Data();    
     Sync_EEPROM();
     uint32_t dn=get_DevNonce(1);
     printVar("DevNonce1=",PAR_UI32,&dn,false,true);
@@ -279,34 +268,16 @@ void main(void)
     dn=get_DevNonce(3);
     printVar("DevNonce3=",PAR_UI32,&dn,false,true);
     getTableValues();
-//    SystemTimerInit();
-//    TMR_ISR_Lora_Init();
-//    SensorsInit();
     
     
-    print_array();
+//    print_array();
     
-/*    send_chars("mui=");
-    get_mui(mui);
-    for(uint8_t i=0;i<16;i++)
-    {
-        send_chars(" ");
-        send_chars(ui8tox(mui[i],b));
-    }
-    send_chars("\r\ndid=");
-    uint32_t did=get_did();
-    send_chars(ui32tox(did,b));
-    send_chars("\r\n");*/
-    
-            
     start_x_shell();
 
     set_s("SPI_TRACE",&trace);
     set_s("INTERVAL",&dt);
     set_s("MODE",&mode);
     
-//    LORAWAN_PlatformInit();
-//    SX1276_Reset();
     switch(mode)
     {
         case MODE_SEND:
@@ -353,84 +324,46 @@ void main(void)
             JoinIntervalTimerId=SwTimerCreate();
             pauseTimerId=SwTimerCreate();
             TMR3_SetInterruptHandler(handle16sInterrupt);
-//            SysConfigSleep();
-    
             LORAWAN_Init(RxDataDone, RxJoinResponse);
-//            LORAWAN_SetNetworkSessionKey(nwkSKey);
-//            LORAWAN_SetApplicationSessionKey(appSKey);
-//            LORAWAN_SetDeviceAddress(devAddr);
-//            set_s("DEV0EUI",&DevEui);
             LORAWAN_SetDeviceEui(&deveui);
             set_s("APPKEY",appkey);
             LORAWAN_SetApplicationKey(appkey);
-//            js_number=selectJoinServer(&joinServer);
             LORAWAN_SetJoinEui(&joineui);
-
+            uint8_t lastAction=0;
             
-//            LORAWAN_SetChannelIdStatus (0, DISABLED);
-//            LORAWAN_SetChannelIdStatus (1, DISABLED);
-    
-            // Wait for Join response
-            
-            SwTimerSetCallback(JoinIntervalTimerId,StartJoinProcedure,0);
-            StartJoinProcedure(0);
-            startDeviceJoinedFlag = false;
-
-            while(endDeviceJoinedFlag == false)
+            while(1)
             {
-                if(startDeviceJoinedFlag)
-                {
-                    joinInterval=Random(UINT16_MAX);
-                    SwTimerSetTimeout(JoinIntervalTimerId, MS_TO_TICKS(joinInterval));
-                    SwTimerStart(JoinIntervalTimerId);
-                    startDeviceJoinedFlag=false;
-                }
-                LORAWAN_Mainloop();        
-            }
-
-            // Application main loop
-            LorawanError_t err;
-            SwTimerSetCallback(pauseTimerId, pauseCallback, 0);
-            while (1)
-            {   
-                // Stack management
                 LORAWAN_Mainloop();
-
-                // Application management
-                if(pauseEnded)
+                if(LORAWAN_GetState() == IDLE)
                 {
-//                    send_chars("Pause Ended\r\n");
-                    if(readAndSendFlag == true)
+                    if( !loRa.macStatus.networkJoined || loRa.macStatus.rejoinNeeded )
                     {
-    //                   LoRaWakeUp();
-                        if((err=readAndSend())==OK) readAndSendFlag = false;
+                        if(!loRa.lorawanMacStatus.joining)
+                        {
+                            err=LORAWAN_Join(OTAA);
+                         }
                     }
-                    if(err==OK && LoRa_CanSleep())
+                    else
                     {
-                        my_sleep(30);
-                        readAndSendFlag=true;
+                        err=LORAWAN_Send(CNF, 2, &data, sizeof(data));
                     }
-                    else if(err==NO_CHANNELS_FOUND)
+/*                    if(err==MAC_PAUSED || err==NO_CHANNELS_FOUND)
                     {
-                        pauseEnded=0;
                         SwTimerSetTimeout(pauseTimerId, MS_TO_TICKS(1000));
                         SwTimerStart(pauseTimerId);
+                        print_error(err);
+                    }*/
+                    if(err!=OK && err!=MAC_STATE_NOT_READY_FOR_TRANSMISSION && err!=MAC_PAUSED && err!=NO_CHANNELS_FOUND)
+                    {
+                        print_error(err);
+                        RESET();
                     }
+                    if(err==OK || err==NO_CHANNELS_FOUND)
+                    {
+                        if(ch_wait>5000)
+                        my_sleep(30);
+                    } else print_error(err);
                 }
-/*                send_chars(ui8tox(NCO1ACCU,b));
-                send_chars(" ");
-                send_chars(ui8tox(NCO1ACCH,b));
-                send_chars(" ");
-                send_chars(ui8tox(NCO1ACCL,b));
-                send_chars("\r\n");*/
-                // "Idle" --> go to Sleep
-/*                if(LoRa_CanSleep())
-                {
-//                    send_chars("to sleep\r\n");
-                    LoRaSleep();
-                    insleep=1;
-                    SLEEP();
-                }*/
             }
             break;
     }
@@ -464,14 +397,14 @@ void StartJoinProcedure(uint8_t param)
 
 
 void handle16sInterrupt() {
-    static volatile uint8_t counterSleepTimeout = RESET;
+    static volatile uint8_t counterSleepTimeout = 0;
     
     if( ++counterSleepTimeout == ONE_HOUR_TIMEOUT_COUNTS )
     {
         insleep=0;
         // an hour passed
         readAndSendFlag = true;
-        counterSleepTimeout = RESET;
+        counterSleepTimeout = 0;
     } 
     else 
     {

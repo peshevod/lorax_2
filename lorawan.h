@@ -1487,7 +1487,7 @@ void print_error(LorawanError_t err);
 //void LORAWAN_SendDownAckCallback (uint8_t param);
 //void LORAWAN_SendJoinAcceptCallback (uint8_t param);
 void LORAWAN_Receive(void);
-uint8_t selectJoinServer(Profile_t* joinServer);
+//uint8_t selectJoinServer(Profile_t* joinServer);
 uint8_t euicmpnz(GenericEui_t* eui);
 uint8_t euicmp(GenericEui_t* eui1, GenericEui_t* eui2);
 uint8_t euicmpr(GenericEui_t* eui1, GenericEui_t* eui2);

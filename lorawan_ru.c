@@ -113,6 +113,7 @@ uint32_t tt0_value=86400;
 //extern uint8_t number_of_devices;
 extern int32_t rx1_offset;
 extern uint8_t jsnumber;
+uint32_t ch_wait;
 
 
 
@@ -236,7 +237,7 @@ void LORAWAN_Reset (IsmBand_t ismBandNew)
     loRa.deviceClass = CLASS_A;
     
     // initialize default channels
-    loRa.maxChannels = MAX_EU_SINGLE_BAND_CHANNELS; 
+    loRa.maxChannels = MAX_RU_SINGLE_BAND_CHANNELS; 
     if(ISM_EU868 == ismBandNew)
     {
         RADIO_Init(&radioBuffer[16], EU868_CALIBRATION_FREQ);
@@ -285,6 +286,14 @@ void LORAWAN_Reset (IsmBand_t ismBandNew)
         loRa.currentDataRate=12-sf;
     }
     else loRa.currentDataRate=6;
+    
+    // use only one data rate
+    
+    for (uint8_t i = 0; i < loRa.maxChannels; i++)
+    {
+        Channels[i].dataRange.min = loRa.currentDataRate;
+        Channels[i].dataRange.max = loRa.currentDataRate;
+    }
 	
     UpdateMinMaxChDataRate ();
 
@@ -892,6 +901,7 @@ LorawanError_t SearchAvailableChannel (uint8_t maxChannels, bool transmissionTyp
     {
 //        printVar("Search channel= ",PAR_UI8,&i,false,true);
 //        printVar("channelTimer= ",PAR_UI32,&Channels[i].channelTimer,false,true);
+        ch_wait=Channels[i].channelTimer;
         if ( ( Channels[i].status == ENABLED ) && ( Channels[i].channelTimer == 0 ) && ( loRa.currentDataRate >= Channels[i].dataRange.min ) && ( loRa.currentDataRate <= Channels[i].dataRange.max ) )
         {
             if ( (!transmissionType && Channels[i].joinRequestChannel == 1) || transmissionType) // if transmissionType is join request, then check also for join request channels
