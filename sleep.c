@@ -8,6 +8,7 @@
 #include "tmr_lora_addons.h"
 #include "shell.h"
 #include "lorawan_types.h"
+#include "lorawan.h"
 #include "lorawan_ru.h"
 #include "sensors.h"
 #include "measurements.h"
@@ -281,6 +282,7 @@ static void periph_on(uint32_t interval)
 void my_sleep(uint32_t interval)
 {
     uint8_t a;
+    if(LORAWAN_GetState() != IDLE) return;
     send_chars("Entering sleep ");
     send_chars(ui32toa(interval,b));
     send_chars("s.\r\n");

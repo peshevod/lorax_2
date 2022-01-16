@@ -329,14 +329,13 @@ void main(void)
             set_s("APPKEY",appkey);
             LORAWAN_SetApplicationKey(appkey);
             LORAWAN_SetJoinEui(&joineui);
-            uint8_t lastAction=0;
             
             while(1)
             {
                 LORAWAN_Mainloop();
                 if(LORAWAN_GetState() == IDLE)
                 {
-                    if( !loRa.macStatus.networkJoined || loRa.macStatus.rejoinNeeded )
+                    if( !loRa.macStatus.networkJoined)
                     {
                         if(!loRa.lorawanMacStatus.joining)
                         {
@@ -358,11 +357,14 @@ void main(void)
                         print_error(err);
                         RESET();
                     }
-                    if(err==OK || err==NO_CHANNELS_FOUND)
+                    if(loRa.macStatus.networkJoined)
                     {
-                        if(ch_wait>5000)
-                        my_sleep(30);
-                    } else print_error(err);
+                        if(err==OK || err==NO_CHANNELS_FOUND)
+                        {
+                            if(ch_wait>5000)
+                            my_sleep(30);
+                        } else print_error(err);
+                    }
                 }
             }
             break;

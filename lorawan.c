@@ -1130,7 +1130,7 @@ void AckRetransmissionCallback (uint8_t param)
                         {
                             // if transmission was not possible, we must wait another ACK timeout seconds period of time to initiate a new transmission
                             UpdateRetransmissionAckTimeoutState ();
-                        }
+                       }
                     }
                     else
                     {
@@ -1149,8 +1149,6 @@ void AckRetransmissionCallback (uint8_t param)
             }
             else if ( (loRa.counterRepetitionsConfirmedUplink > loRa.maxRepetitionsConfirmedUplink) && (loRa.macStatus.macPause == DISABLED) )
             {
-                loRa.macStatus.networkJoined=0;
-                loRa.lorawanMacStatus.joining=0;
                 ResetParametersForConfirmedTransmission ();
                 if (rxPayload.RxAppData != NULL)
                 {
@@ -1267,6 +1265,7 @@ void ResetParametersForConfirmedTransmission (void)
     loRa.counterRepetitionsConfirmedUplink = 1;
 //    loRa.lorawanMacStatus.ackRequiredFromNextDownlinkMessage = DISABLED;
     loRa.lorawanMacStatus.ackRequiredFromNextDownlinkMessage = ENABLED;
+    loRa.macStatus.rejoinNeeded=1;
 }
 
 void ResetParametersForUnconfirmedTransmission (void)
@@ -2616,5 +2615,10 @@ void LORAWAN_Mainloop (void)
     if ((localDioStatus & SENSOR2) != 0)
     {
         Sensor2();
+    }
+    if(loRa.macStatus.rejoinNeeded)
+    {
+        loRa.macStatus.networkJoined=0;
+        loRa.macStatus.rejoinNeeded=0;
     }
 }
