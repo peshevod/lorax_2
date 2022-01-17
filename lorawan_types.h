@@ -181,6 +181,9 @@ typedef union
         unsigned ackRequiredFromNextDownlinkMessage:1;  //if set, the next downlink message should have the ACK bit set because an ACK is needed for the end device
         unsigned ackRequiredFromNextUplinkMessage:1;    //if set, the next uplink message should have the ACK bit set because an ACK is needed for the server
         unsigned joining: 1;
+        unsigned joining_1h: 1;
+        unsigned joining_10h: 1;
+        unsigned joining_over10h: 1;
         unsigned fPending:1;
         unsigned adrAckRequest:1;
         unsigned synchronization:1;                     //if set, there is no need to send immediately a packet because the application sent one from the callback

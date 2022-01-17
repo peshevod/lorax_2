@@ -75,12 +75,15 @@ extern const uint8_t maxPayloadSize[];
 extern ChannelParams_t Channels[];
 extern const uint8_t rxWindowSize[];
 extern const int8_t rxWindowOffset[];
+extern const uint8_t spreadingFactor[];
+extern const uint8_t bandwidth[];
 extern uint8_t mode;
 extern uint8_t b[128];
 extern uint8_t tt0;
 extern uint32_t tt0_value;
 //extern uint32_t EEPROM_types;
 extern uint32_t DenyTransmit, DenyReceive;
+extern uint32_t lastTimeOnAir, interval1;
 
 
 /************************ FUNCTION PROTOTYPES *************************/
@@ -1213,7 +1216,11 @@ void UpdateJoinSuccessState(uint8_t param)
     loRa.lorawanMacStatus.joining = 0;  //join was done
     loRa.macStatus.networkJoined = 1;   //network is joined
     loRa.macStatus.macState = IDLE;
-
+    loRa.lorawanMacStatus.joining_over10h=0;
+    loRa.lorawanMacStatus.joining_10h=0;
+    loRa.lorawanMacStatus.joining_1h=0;
+    interval1=0;
+    
 //    devices[param].macStatus.networkJoined=1;
     
     loRa.adrAckCnt = 0;  // adr ack counter becomes 0, it increments only for ADR set
@@ -1275,14 +1282,93 @@ void ResetParametersForUnconfirmedTransmission (void)
     loRa.crtMacCmdIndex = 0;
 }
 
+static uint32_t Ts,dt1,tsum;
+
 void SetJoinFailState(void)
 {
+    static uint32_t T,st,bw,sf,seed32;
+    uint16_t seed;
     loRa.macStatus.networkJoined = 0;
     loRa.lorawanMacStatus.joining = 0;
     loRa.macStatus.macState = IDLE;
     if (rxPayload.RxJoinResponse != NULL)
     {
         rxPayload.RxJoinResponse(REJECTED); // inform the application layer that join failed via callback
+    }
+    if(!loRa.lorawanMacStatus.joining_1h && !loRa.lorawanMacStatus.joining_10h && !loRa.lorawanMacStatus.joining_over10h )
+    {
+        tsum=0;
+        loRa.lorawanMacStatus.joining_1h=1;
+        sf=0x00000001<<spreadingFactor[loRa.receiveWindow2Parameters.dataRate];       
+        printVar("sf=",PAR_UI32,&sf,false,true);
+        switch (bandwidth[loRa.receiveWindow2Parameters.dataRate])
+        {
+            case BW_125KHZ:
+                bw = 125000;
+                break;
+            case BW_250KHZ:
+                bw = 250000;
+                break;
+            case BW_500KHZ:
+                bw = 500000;
+                break;
+            default:
+                // Disable frequency hopping
+                bw=250000;
+                break;
+        }
+        printVar("bw=",PAR_UI32,&bw,false,true);
+        Ts=1000*sf*rxWindowSize[loRa.receiveWindow2Parameters.dataRate]/bw;
+        printVar("Ts=",PAR_UI32,&Ts,false,true);
+        Ts+=loRa.protocolParameters.joinAcceptDelay2;
+        printVar("full Ts=",PAR_UI32,&Ts,false,true);
+        printVar("lastTimeOnAir=",PAR_UI32,&lastTimeOnAir,false,true);
+        dt1=2*(lastTimeOnAir*DUTY_CYCLE_JOIN_REQUEST_1H-Ts);
+        printVar("dt1=",PAR_UI32,&dt1,false,true);
+        seed=0;
+        for(uint8_t i=0;i<4;i++) seed^=*((uint16_t*)(&deveui.buffer[2*i]));
+        seed32=seed;
+        printVar("seed=",PAR_UI32,&seed32,true,true);
+        srand(seed);
+    }
+    else if(loRa.lorawanMacStatus.joining_over10h)
+    {
+        uint32_t r=rand();
+        interval1=r*dt1/RAND_MAX;
+        printVar("interval1=",PAR_UI32,&interval1,false,true);
+    }
+    else tsum+=lastTimeOnAir+Ts+interval1;
+    if(loRa.lorawanMacStatus.joining_10h)
+    {
+        if(tsum<39600000)
+        {
+            uint32_t r=rand();
+            interval1=r*dt1/RAND_MAX;
+            printVar("interval1=",PAR_UI32,&interval1,false,true);
+        }
+        else
+        {
+            loRa.lorawanMacStatus.joining_10h=0;
+            loRa.lorawanMacStatus.joining_over10h=1;
+            dt1=2*(lastTimeOnAir*DUTY_CYCLE_JOIN_REQUEST_OVER10H-Ts);
+            printVar("dt1=",PAR_UI32,&dt1,false,true);
+        }
+    }
+    if(loRa.lorawanMacStatus.joining_1h)
+    {
+        if(tsum<3600000)
+        {
+            uint32_t r=rand();
+            interval1=r*dt1/RAND_MAX;
+            printVar("interval1=",PAR_UI32,&interval1,false,true);
+        }
+        else
+        {
+            loRa.lorawanMacStatus.joining_1h=0;
+            loRa.lorawanMacStatus.joining_10h=1;
+            dt1=2*(lastTimeOnAir*DUTY_CYCLE_JOIN_REQUEST_10H-Ts);
+            printVar("dt1=",PAR_UI32,&dt1,false,true);
+        }
     }
 }
 

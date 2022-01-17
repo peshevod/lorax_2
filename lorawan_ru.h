@@ -58,7 +58,9 @@ extern "C" {
 //dutycycle definition
 #define DUTY_CYCLE_DEFAULT                               302  //0.33 %  
 //#define DUTY_CYCLE_JOIN_REQUEST                          3029 //0.033%  
-#define DUTY_CYCLE_JOIN_REQUEST                          99 //1%  
+#define DUTY_CYCLE_JOIN_REQUEST_1H                          199 //0.5%  
+#define DUTY_CYCLE_JOIN_REQUEST_10H                          999 //0.1%  
+#define DUTY_CYCLE_JOIN_REQUEST_OVER10H                          9999 //0.01%  
 //#define DUTY_CYCLE_DEFAULT_NEW_CHANNEL                   999  //0.1%
 #define DUTY_CYCLE_DEFAULT_NEW_CHANNEL                   99  //1%
 

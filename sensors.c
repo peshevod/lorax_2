@@ -9,7 +9,7 @@
 uint8_t sensor1_inv, sensor2_inv, sensor1_en, sensor2_en, sensor1_trg, sensor2_trg;
 volatile uint8_t sensor_event;
 extern volatile uint8_t dioStatus;
-extern bool readAndSendFlag;
+//extern bool readAndSendFlag;
 extern Data_t data;
 
 void Sensor1_ISR(void)
@@ -60,7 +60,7 @@ void Sensor1(void)
 {
     data.sensors.sensor1_cur=getSensor1Alarm();
     if(data.sensors.sensor1_evt<15) data.sensors.sensor1_evt++;
-    if(sensor1_trg) readAndSendFlag = true;
+//    if(sensor1_trg) readAndSendFlag = true;
     send_chars("Sensor1 Alarm\n");
 }
 
@@ -68,7 +68,7 @@ void Sensor2(void)
 {
     data.sensors.sensor2_cur=getSensor2Alarm();
     if(data.sensors.sensor2_evt<15) data.sensors.sensor2_evt++;
-    if(sensor2_trg) readAndSendFlag = true;
+//    if(sensor2_trg) readAndSendFlag = true;
     send_chars("Sensor2 Alarm\n");
 }
 

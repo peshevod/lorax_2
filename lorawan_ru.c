@@ -61,10 +61,10 @@ static const int8_t txPowerRU864[] = {20, 14, 12, 10, 8, 6, 4, 2, 0};
 static const int8_t txPower433[] = {10, 7, 4, 1, -2, -5};
 
 // Spreading factor possibilities 
-static const uint8_t spreadingFactor[] = {12, 11, 10, 9, 8, 7, 7};
+const uint8_t spreadingFactor[] = {12, 11, 10, 9, 8, 7, 7};
 
 // Bandwidth possibilities 
-static const uint8_t bandwidth[] = {BW_125KHZ, BW_125KHZ, BW_125KHZ, BW_125KHZ, BW_125KHZ, BW_125KHZ, BW_250KHZ};
+const uint8_t bandwidth[] = {BW_125KHZ, BW_125KHZ, BW_125KHZ, BW_125KHZ, BW_125KHZ, BW_125KHZ, BW_250KHZ};
 
 // Modulation possibilities 
 static const uint8_t modulation[] = {MODULATION_LORA, MODULATION_LORA, MODULATION_LORA, MODULATION_LORA, MODULATION_LORA, MODULATION_LORA, MODULATION_LORA, MODULATION_FSK};
@@ -469,7 +469,8 @@ void LORAWAN_TxDone(uint16_t timeOnAir)
                 SwTimerStart(loRa.joinAccept2TimerId);
 //                SwTimersInterrupt();
 
-                Channels[i].channelTimer = ((uint32_t)timeOnAir) * (((uint32_t)DUTY_CYCLE_JOIN_REQUEST + 1) * ((uint32_t)loRa.prescaler) - 1); 
+                Channels[i].channelTimer = 0; 
+//                Channels[i].channelTimer = ((uint32_t)timeOnAir) * (((uint32_t)DUTY_CYCLE_JOIN_REQUEST_1H + 1) * ((uint32_t)loRa.prescaler) - 1); 
                 loRa.devNonce++;
                 put_DevNonce(jsnumber, loRa.devNonce);
             }

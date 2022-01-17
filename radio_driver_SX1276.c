@@ -76,12 +76,13 @@ uint8_t b[128];
 uint8_t trace;
 extern uint8_t rssi_off;
 extern uint8_t mode;
-extern uint32_t bandwidth;
-extern uint8_t spread_factor;
+uint32_t bandwidth1;
+uint8_t spread_factor;
 uint32_t rectimer_value, delta, ticks, ticks_old;
 extern Data_t data;
 int32_t rx1_offset;
 extern LoRa_t loRa;
+extern uint32_t lastTimeOnAir;
 
 void RADIO_RegisterWrite(uint8_t reg, uint8_t value)
 {
@@ -415,7 +416,8 @@ void RADIO_Init(uint8_t *radioBuffer, uint32_t frequency)
     set_s("MODULATION",&tmp8);
     if(tmp8) RadioConfiguration.modulation = MODULATION_FSK;
     else RadioConfiguration.modulation = MODULATION_LORA;
-    switch(bandwidth)
+    set_s("BW",&bandwidth1);
+    switch(bandwidth1)
     {
         case 125000:
             RadioConfiguration.bandWidth = BW_125KHZ;
@@ -1147,6 +1149,7 @@ static void RADIO_TxDone(void)
     if ((RadioConfiguration.flags & RADIO_FLAG_TIMEOUT) == 0)
     {
         timeOnAir = TIME_ON_AIR_LOAD_VALUE - TICKS_TO_MS(SwTimerReadValue(RadioConfiguration.timeOnAirTimerId));
+        lastTimeOnAir=timeOnAir;
         if(mode==MODE_DEVICE) LORAWAN_TxDone((uint16_t)timeOnAir);
         else LORAX_TxDone((uint16_t)timeOnAir,0);
     };

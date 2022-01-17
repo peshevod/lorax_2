@@ -73,15 +73,15 @@ uint32_t devAddr = 0x89002483;
 uint8_t appkey[16];
 
 
-uint8_t endDeviceJoinedFlag = false;
-uint8_t startDeviceJoinedFlag = true;
-uint32_t joinInterval;
-uint8_t JoinIntervalTimerId, pauseTimerId;
-bool readAndSendFlag = true;
+//uint8_t endDeviceJoinedFlag = false;
+//uint8_t startDeviceJoinedFlag = true;
+//uint32_t joinInterval;
+//uint8_t JoinIntervalTimerId, pauseTimerId;
+//bool readAndSendFlag = true;
 
 void RxDataDone(uint8_t* pData, uint8_t dataLength, OpStatus_t status);
 void RxJoinResponse(bool status);
-void handle16sInterrupt();
+//void handle16sInterrupt();
 void SysConfigSleep(void);
 uint8_t LoRa_CanSleep(void);
 void LoRaSleep(void);
@@ -89,23 +89,23 @@ void LoRaWakeUp(void);
 uint8_t computeSensorPercent (uint16_t sensorValueToCompute);
 LorawanError_t readAndSend(void);
 void print_array();
-void StartJoinProcedure(uint8_t param);
+//void StartJoinProcedure(uint8_t param);
 
 
 uint8_t localDioStatus;
 uint8_t radio_buffer[256];
 //uint8_t send_array[256];
 uint8_t mode,t0,t1,rx_done;
-uint32_t calibration_frequency, bandwidth;
 RadioError_t radio_err;
 extern uint32_t uid;
 uint32_t m;
-volatile uint8_t insleep;
-uint8_t spread_factor;
+//volatile uint8_t insleep;
+//uint8_t spread_factor;
 extern GenericEui_t deveui,joineui;
-uint32_t DenyTransmit, DenyReceive;
+//uint32_t DenyTransmit, DenyReceive;
 Data_t data;
 uint32_t dt;
+uint32_t lastTimeOnAir, interval1=0, interval;
 
 extern char b[128];
 extern uint8_t trace;
@@ -113,14 +113,14 @@ uint8_t rssi_off;
 extern uint8_t mui[16];
 extern uint8_t js_number;
 //extern Profile_t joinServer;
-extern uint8_t number_of_devices;
+//extern uint8_t number_of_devices;
 extern uint32_t NetID;
 extern uint8_t DevAddr[4];
-extern Profile_t devices[MAX_EEPROM_RECORDS];
+//extern Profile_t devices[MAX_EEPROM_RECORDS];
 extern LoRa_t loRa;
 Sensors_t sensors;
-volatile uint8_t pauseEnded=1;
-uint8_t pauseTimerId;
+//volatile uint8_t pauseEnded=1;
+//uint8_t pauseTimerId;
 extern uint32_t ch_wait;
 
 char* errors[] = {
@@ -141,10 +141,10 @@ char* errors[] = {
 };
 
 
-void pauseCallback(uint8_t param)
+/*void pauseCallback(uint8_t param)
 {
     SwTimerStop(pauseTimerId);
-}
+}*/
 
 void LORAX_TxDone(uint16_t timeOnAir, uint8_t was_timeout)
 {
@@ -256,6 +256,7 @@ void Transmit_array(void)
 void main(void)
 {
     LorawanError_t err;    // Initialize the device
+    uint32_t calibration_frequency;
 //    SYSTEM_Initialize();
 //    NCO1CONbits.EN = 0;
     init_system();
@@ -321,9 +322,10 @@ void main(void)
             break;
         case MODE_DEVICE:
             send_chars("Device\r\n");
-            JoinIntervalTimerId=SwTimerCreate();
-            pauseTimerId=SwTimerCreate();
-            TMR3_SetInterruptHandler(handle16sInterrupt);
+            set_s("INTERVAL",&interval);
+//            JoinIntervalTimerId=SwTimerCreate();
+//            pauseTimerId=SwTimerCreate();
+//            TMR3_SetInterruptHandler(handle16sInterrupt);
             LORAWAN_Init(RxDataDone, RxJoinResponse);
             LORAWAN_SetDeviceEui(&deveui);
             set_s("APPKEY",appkey);
@@ -337,6 +339,7 @@ void main(void)
                 {
                     if( !loRa.macStatus.networkJoined)
                     {
+                        if(interval1!=0) my_sleep(interval1);
                         if(!loRa.lorawanMacStatus.joining)
                         {
                             err=LORAWAN_Join(OTAA);
@@ -346,12 +349,6 @@ void main(void)
                     {
                         err=LORAWAN_Send(CNF, 2, &data, sizeof(data));
                     }
-/*                    if(err==MAC_PAUSED || err==NO_CHANNELS_FOUND)
-                    {
-                        SwTimerSetTimeout(pauseTimerId, MS_TO_TICKS(1000));
-                        SwTimerStart(pauseTimerId);
-                        print_error(err);
-                    }*/
                     if(err!=OK && err!=MAC_STATE_NOT_READY_FOR_TRANSMISSION && err!=MAC_PAUSED && err!=NO_CHANNELS_FOUND)
                     {
                         print_error(err);
@@ -362,7 +359,7 @@ void main(void)
                         if(err==OK || err==NO_CHANNELS_FOUND)
                         {
                             if(ch_wait>5000)
-                            my_sleep(30);
+                            my_sleep(interval*1000);
                         } else print_error(err);
                     }
                 }
@@ -382,23 +379,23 @@ void RxJoinResponse(bool status)
     if(status)
     {
         send_chars("Joining Procedure Successfully ended\r\n");
-        endDeviceJoinedFlag = true;
+//        endDeviceJoinedFlag = true;
     }
     else
     {
         send_chars("Joining Procedure Failed\r\n");
-        startDeviceJoinedFlag = true;
+//        startDeviceJoinedFlag = true;
     }
 }
 
-void StartJoinProcedure(uint8_t param)
+/*void StartJoinProcedure(uint8_t param)
 {
     endDeviceJoinedFlag = false;
     LORAWAN_Join(OTAA);    
-}
+}*/
 
 
-void handle16sInterrupt() {
+/*void handle16sInterrupt() {
     static volatile uint8_t counterSleepTimeout = 0;
     
     if( ++counterSleepTimeout == ONE_HOUR_TIMEOUT_COUNTS )
@@ -412,7 +409,7 @@ void handle16sInterrupt() {
     {
         if(insleep) SLEEP();
     } 
-}
+}*/
 
 
 uint8_t LoRa_CanSleep(void) 

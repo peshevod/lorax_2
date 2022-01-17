@@ -26,11 +26,12 @@ extern volatile uint8_t sensor_event;
 extern uint8_t radioBuffer[];
 uint8_t t_nreset;
 extern char b[128];
+extern Data_t data;
 
 static void compute_nco(uint32_t dt)
 {
-    counter0=(dt*1000)/4329559; // кол-во полных циклов nco1
-    uint64_t div=(dt*1000)-(counter0*4329559); // кол-во ms в неполном цикле nco1
+    counter0=dt/4329559; // кол-во полных циклов nco1
+    uint64_t div=dt-(counter0*4329559); // кол-во ms в неполном цикле nco1
     if(div==0) counter0--; // коррекция полных циклов nco1 если div==0
     rest=1048576-(div*24219)/100000; // максимальное кол-во циклов в nco1(2^20=1024x1024) минус кол-во циклов CLKR(LFINTOSC/128) в оставшихся милисекундах
     ncou = (rest&0x00FF0000)>>16;
@@ -249,7 +250,7 @@ static void periph_on(uint32_t interval)
 
     TMR3MD=0; // Timer TMR3
     TMR3_Initialize();
-    ticksNCO=interval*32768;
+    ticksNCO=interval*32768/1000;
     ticksToScheduledInterrupt = SwTimersInterrupt();
     TMR1_StartTimer();
 //    send_chars("TMR1 Start\r\n");
@@ -266,12 +267,13 @@ static void periph_on(uint32_t interval)
         if(Channels[k].channelTimer<interval*1000) Channels[k].channelTimer=0;
         else Channels[k].channelTimer-=interval*1000;
     }*/
-    loRa.lastTimerValue+=interval*1000;
+    loRa.lastTimerValue+=interval;
 //    send_chars("Timers corrected\r\n");
     
     ADCMD=0; // ADCC
     ADCC_Initialize();
     getTableValues();
+    data.temperature=getTemperature();
     SPI1MD=0; // SPI1 Module
     SPI1_Initialize();
     SPI1_Open(SPI1_DEFAULT);
@@ -285,7 +287,7 @@ void my_sleep(uint32_t interval)
     if(LORAWAN_GetState() != IDLE) return;
     send_chars("Entering sleep ");
     send_chars(ui32toa(interval,b));
-    send_chars("s.\r\n");
+    send_chars("ms.\r\n");
     periph_off();
     startNCO(interval);
     while(1)
