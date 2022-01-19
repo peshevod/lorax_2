@@ -225,7 +225,10 @@ void LORAWAN_Reset (IsmBand_t ismBandNew)
         devices[j].DevNonce = 0;
     }*/
 
-    loRa.maxRepetitionsConfirmedUplink = 7; // 7 retransmissions should occur for each confirmed frame sent until ACK is received
+    //loRa.maxRepetitionsConfirmedUplink = 7; // 7 retransmissions should occur for each confirmed frame sent until ACK is received
+    uint8_t maxrep=7;
+    set_s("NBTRANS",&maxrep);
+    LORAWAN_SetNumberOfRetransmissions(maxrep);
     loRa.maxRepetitionsUnconfirmedUplink = 0; // 0 retransmissions should occur for each unconfirmed frame sent until a response is received
     loRa.counterRepetitionsConfirmedUplink = 1;
     loRa.counterRepetitionsUnconfirmedUplink = 1;
@@ -306,7 +309,10 @@ void LORAWAN_Reset (IsmBand_t ismBandNew)
     loRa.protocolParameters.receiveDelay2 = RECEIVE_DELAY2;
     loRa.protocolParameters.joinAcceptDelay1 = JOIN_ACCEPT_DELAY1;
     loRa.protocolParameters.joinAcceptDelay2 = JOIN_ACCEPT_DELAY2;
-    loRa.protocolParameters.ackTimeout = ACK_TIMEOUT;
+    //loRa.protocolParameters.ackTimeout = ACK_TIMEOUT;
+    uint32_t retrt=ACK_TIMEOUT;
+    set_s("RETRTIMEOUT",&retrt);
+    LORAWAN_SetAckTimeout((uint16_t)retrt);
     loRa.protocolParameters.adrAckDelay = ADR_ACK_DELAY;
     loRa.protocolParameters.adrAckLimit = ADR_ACK_LIMIT;
     loRa.protocolParameters.maxFcntGap = MAX_FCNT_GAP;
@@ -609,7 +615,9 @@ void LORAWAN_RxTimeout(void)
                     if (loRa.counterRepetitionsConfirmedUplink <= loRa.maxRepetitionsConfirmedUplink)
                     {
                         loRa.macStatus.macState = RETRANSMISSION_DELAY;
-                        SwTimerSetTimeout(loRa.ackTimeoutTimerId, MS_TO_TICKS_SHORT(loRa.protocolParameters.ackTimeout));
+//                        uint32_t t=loRa.protocolParameters.ackTimeout;
+//                        printVar("loRa.protocolParameters.ackTimeout=",PAR_UI32,&t,false,true);
+                        SwTimerSetTimeout(loRa.ackTimeoutTimerId, MS_TO_TICKS(loRa.protocolParameters.ackTimeout));
                         SwTimerStart(loRa.ackTimeoutTimerId);
                     }
                     else
@@ -655,7 +663,7 @@ void LORAWAN_RxTimeout(void)
                                      minim = Channels[i].channelTimer;
                                  }
                              }
-                             SwTimerSetTimeout (loRa.unconfirmedRetransmisionTimerId, MS_TO_TICKS_SHORT(minim + 50) );
+                             SwTimerSetTimeout (loRa.unconfirmedRetransmisionTimerId, MS_TO_TICKS(minim + 50) );
                              SwTimerStart (loRa.unconfirmedRetransmisionTimerId);
                         }
                     }
