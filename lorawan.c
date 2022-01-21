@@ -41,6 +41,7 @@
 #include "shell.h"
 #include "eeprom.h"
 #include "sensors.h"
+#include "measurements.h"
 
 /****************************** VARIABLES *************************************/
 
@@ -84,6 +85,7 @@ extern uint32_t tt0_value;
 //extern uint32_t EEPROM_types;
 extern uint32_t DenyTransmit, DenyReceive;
 extern uint32_t lastTimeOnAir, interval1;
+extern Data_t data;
 
 
 /************************ FUNCTION PROTOTYPES *************************/

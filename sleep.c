@@ -161,9 +161,9 @@ void periph_permanent_on(void)
     CLKRMD=0; // Clock Reference
     CLKREF_Initialize();
     IOCMD=0; // Interrupt-on-Change
+    NVMMD=0; // NVM Module
     INTERRUPT_Initialize();
     EXT_INT_Initialize();
-    SensorsInit();
     TMR1MD=0; // Timer TMR1
     TMR1_Initialize();
     SystemTimerInit();
@@ -230,23 +230,6 @@ static void periph_on(uint32_t interval)
     FVR_Initialize();
     HLVDMD=0; // High/Low-Voltage Detect
     HLVD_Initialize();
-    NVMMD=0; // NVM Module
-    NOP();
-    NOP();
-    NOP();
-    NOP();
-    NOP();
-    NOP();
-    NOP();
-    NOP();
-    NOP();
-    NOP();
-    NOP();
-    NOP();
-    NOP();
-    NOP();
-    NOP();
-    NOP();
 
     TMR3MD=0; // Timer TMR3
     TMR3_Initialize();

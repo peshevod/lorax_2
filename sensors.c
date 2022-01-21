@@ -15,6 +15,7 @@ extern Data_t data;
 void Sensor1_ISR(void)
 {
     dioStatus|=SENSOR1;
+    data.sensors.sensor1_cur=SENSOR1_PORT^sensor1_inv;
     sensor_event=1;
     
 }
@@ -22,6 +23,7 @@ void Sensor1_ISR(void)
 void Sensor2_ISR(void)
 {
     dioStatus|=SENSOR2;
+    data.sensors.sensor2_cur=SENSOR2_PORT^sensor2_inv;
     sensor_event=1;
 }
 
@@ -37,39 +39,49 @@ void SensorsInit(void)
     if(s1&0x04) sensor1_inv=0x01;else sensor1_inv=0;
     if(s2&0x04) sensor2_inv=0x01;else sensor1_inv=0;
     data.sensors.sensor1_mode=s1&0x07;
+//    printVar("s1=",PAR_UI8,&s1,true,true);
     data.sensors.sensor2_mode=s2&0x07;
-    if(sensor1_en) IOCAF3_SetInterruptHandler(Sensor1_ISR); //Sensor1
+//    printVar("s2=",PAR_UI8,&s2,true,true);
+    IOCAFbits.IOCAF3 = 0;
+    if(sensor1_en)
+    {
+        IOCAF3_SetInterruptHandler(Sensor1_ISR);
+        IOCANbits.IOCAN3 = 1;
+        IOCAPbits.IOCAP3 = 1;
+    }
     else
     {
         IOCANbits.IOCAN3 = 0;
         IOCAPbits.IOCAP3 = 0;
-        IOCAFbits.IOCAF3 = 0;
     }//Sensor1
-    if(sensor2_en) IOCAF2_SetInterruptHandler(Sensor2_ISR); //Sensor2
+    IOCAFbits.IOCAF2 = 0;
+    if(sensor2_en)
+    {
+        IOCAF2_SetInterruptHandler(Sensor2_ISR);
+        IOCANbits.IOCAN2 = 1;
+        IOCAPbits.IOCAP2 = 1;
+    }
     else
     {
         IOCANbits.IOCAN2 = 0;
         IOCAPbits.IOCAP2 = 0;
-        IOCAFbits.IOCAF2 = 0;
     }
     data.sensors.sensor1_evt=0;
     data.sensors.sensor2_evt=0;
+    data.sensors.sensor1_cur=SENSOR1_PORT^sensor1_inv;
+    data.sensors.sensor2_cur=SENSOR2_PORT^sensor2_inv;
 }
 
 void Sensor1(void)
 {
-    data.sensors.sensor1_cur=getSensor1Alarm();
     if(data.sensors.sensor1_evt<15) data.sensors.sensor1_evt++;
-//    if(sensor1_trg) readAndSendFlag = true;
-    send_chars("Sensor1 Alarm\n");
+    printVar("Alarm Sensor1=",PAR_UI8,&data.sensors.bytes[0],true,true);
 }
 
 void Sensor2(void)
 {
-    data.sensors.sensor2_cur=getSensor2Alarm();
     if(data.sensors.sensor2_evt<15) data.sensors.sensor2_evt++;
-//    if(sensor2_trg) readAndSendFlag = true;
-    send_chars("Sensor2 Alarm\n");
+    printVar("Alarm Sensor2=",PAR_UI8,&data.sensors.bytes[0],true,true);
 }
 
 

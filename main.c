@@ -262,6 +262,7 @@ void main(void)
     init_system();
     INTERRUPT_GlobalInterruptEnable();
     Sync_EEPROM();
+    SensorsInit();
     uint32_t dn=get_DevNonce(1);
     printVar("DevNonce1=",PAR_UI32,&dn,false,true);
     dn=get_DevNonce(2);
@@ -347,6 +348,8 @@ void main(void)
                     }
                     else
                     {
+                        printVar("sensor1=",PAR_UI8,&data.sensors.bytes[0],true,true);
+                        printVar("sensor2=",PAR_UI8,&data.sensors.bytes[1],true,true);
                         err=LORAWAN_Send(CNF, 2, &data, sizeof(data));
                     }
                     if(err!=OK && err!=MAC_STATE_NOT_READY_FOR_TRANSMISSION && err!=MAC_PAUSED && err!=NO_CHANNELS_FOUND)
@@ -372,7 +375,7 @@ void RxDataDone(uint8_t* pData, uint8_t dataLength, OpStatus_t status)
 {
     data.sensors.sensor1_evt=0;
     data.sensors.sensor2_evt=0;
-}
+ }
 
 void RxJoinResponse(bool status)
 {

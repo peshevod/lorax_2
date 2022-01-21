@@ -20,6 +20,7 @@ extern "C" {
 extern uint8_t sensor1_inv, sensor2_inv, sensor1_en, sensor2_en, sensor1_trg, sensor2_trg, sensor1_intr, sensor2_intr;
 
 void SensorsInit(void);
+void SensorsReset(void);
 void Sensor1(void);
 void Sensor2(void);
 
