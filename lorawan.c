@@ -1107,7 +1107,8 @@ void AckRetransmissionCallback (uint8_t param)
 {
     uint8_t maximumPacketSize;
 
-    send_chars("ARC\r\n");
+    uint8_t countrep=loRa.counterRepetitionsConfirmedUplink;
+    printVar("ARC counter=",PAR_UI8,&countrep,false,true);
     if (loRa.macStatus.macPause == DISABLED)
     {
          if (loRa.counterRepetitionsConfirmedUplink <= loRa.maxRepetitionsConfirmedUplink)
@@ -1703,8 +1704,6 @@ LorawanError_t LORAWAN_RxDone (uint8_t *buffer, uint8_t bufferLength)
 //                send_chars("Stop RW2\r\n");
             }
 
-            loRa.counterRepetitionsUnconfirmedUplink = 1; // this is a guard for LORAWAN_RxTimeout, for any packet that is received, the last uplink packet should not be retransmitted
-
             CheckFlags (hdr);
 
             if (hdr->members.fCtrl.fOptsLen != 0)
@@ -1748,7 +1747,7 @@ LorawanError_t LORAWAN_RxDone (uint8_t *buffer, uint8_t bufferLength)
                 send_chars("frmPayloadLength = 0\r\n");
             }
 
-            loRa.counterRepetitionsUnconfirmedUplink = 1; // reset the counter
+            loRa.counterRepetitionsUnconfirmedUplink = 1; // this is a guard for LORAWAN_RxTimeout, for any packet that is received, the last uplink packet should not be retransmitted
 
             loRa.adrAckCnt = 0; // if a packet comes and is correct after device address and MIC, the counter will start counting again from 0 (any received downlink frame following an uplink frame resets the ADR_ACK_CNT counter)
             loRa.counterAdrAckDelay = 0; // if a packet was received, the counter for adr ack limit will become 0
@@ -1769,6 +1768,7 @@ LorawanError_t LORAWAN_RxDone (uint8_t *buffer, uint8_t bufferLength)
                     }
                     loRa.macStatus.rxDone = 0;
                     send_chars("Ack received\r\n");
+                    loRa.counterRepetitionsConfirmedUplink = 1; // reset the counter
                     if ( (loRa.macStatus.automaticReply == 1) && (loRa.lorawanMacStatus.synchronization == 0) && ( (loRa.lorawanMacStatus.ackRequiredFromNextUplinkMessage == 1) || (loRa.lorawanMacStatus.fPending == ENABLED) ) )
                     {
                         if (SearchAvailableChannel (loRa.maxChannels, 1, &channelIndex) == OK)
@@ -2165,6 +2165,8 @@ static uint8_t PrepareJoinRequestFrame (void)
 
 //    loRa.devNonce = Random (UINT16_MAX);
     loRa.devNonce=get_DevNonce(jsnumber);
+    uint32_t dnonce=loRa.devNonce;
+    printVar("DevNonce prepared=",PAR_UI32,&dnonce,false,true);
     memcpy (&macBuffer[bufferIndex], &loRa.devNonce, sizeof (loRa.devNonce) );
     bufferIndex = bufferIndex + sizeof( loRa.devNonce );
 
@@ -2706,6 +2708,7 @@ void LORAWAN_Mainloop (void)
     }
     if(loRa.macStatus.rejoinNeeded)
     {
+        send_chars("rejoinNeeded set networkJoined=0");
         loRa.macStatus.networkJoined=0;
         loRa.macStatus.rejoinNeeded=0;
     }

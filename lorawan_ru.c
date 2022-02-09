@@ -602,9 +602,9 @@ void LORAWAN_RxTimeout(void)
         else
         {
         // if last message sent was a join request, the join was not accepted after the second window expired
-            send_chars(" RX2Timeout\r\n");
             if (loRa.lorawanMacStatus.joining == 1)
             {
+                send_chars(" RX2Timeout goto SetJoinFailState\r\n");
                 SetJoinFailState();
             }
             // if last message sent was a data message, and there was no reply...
@@ -614,6 +614,7 @@ void LORAWAN_RxTimeout(void)
                 {
                     if (loRa.counterRepetitionsConfirmedUplink <= loRa.maxRepetitionsConfirmedUplink)
                     {
+                        send_chars(" RX2Timeout Retransmission Delay\r\n");
                         loRa.macStatus.macState = RETRANSMISSION_DELAY;
 //                        uint32_t t=loRa.protocolParameters.ackTimeout;
 //                        printVar("loRa.protocolParameters.ackTimeout=",PAR_UI32,&t,false,true);
@@ -622,6 +623,7 @@ void LORAWAN_RxTimeout(void)
                     }
                     else
                     {
+                        send_chars(" RX2Timeout goto ResetParametersForConfirmedTransmission\r\n");
                         ResetParametersForConfirmedTransmission ();
                         if (rxPayload.RxAppData != NULL)
                         {
@@ -629,7 +631,6 @@ void LORAWAN_RxTimeout(void)
                         }
                     }
                 }
-
                 else
                 {
                     if (loRa.counterRepetitionsUnconfirmedUplink <= loRa.maxRepetitionsUnconfirmedUplink)

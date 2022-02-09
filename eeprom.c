@@ -302,14 +302,22 @@ void make_deveui(void)
 void put_DevNonce(uint8_t n, uint16_t devnonce)
 {
     uint16_t dev_start=DEVNONCE_START+(n-1)*2;
+    uint8_t n1=n;
+    uint32_t dnonce=devnonce;
+//    printVar("PutDevNonce n=",PAR_UI8,&n1,false,true);
+//    printVar("PutDevNonce devnonce=",PAR_UI32,&dnonce,false,true);
     DATAEE_WriteByte(dev_start,(uint8_t)(devnonce&0x00FF));
     DATAEE_WriteByte(dev_start+1,(uint8_t)((devnonce&0xFF00)>>8));
 }
 
 uint16_t get_DevNonce(uint8_t n)
 {
+    uint8_t n1=n;
+//    printVar("GetDevNonce n=",PAR_UI8,&n1,false,true);
     uint16_t dev_start=DEVNONCE_START+(n-1)*2;
     uint16_t d=(uint16_t)DATAEE_ReadByte(dev_start) | (((uint16_t)(DATAEE_ReadByte(dev_start+1)))<<8);
+    uint32_t d1=d;
+//    printVar("GetDevNonce d=",PAR_UI32,&d1,false,true);
     if(d==0xffff || d==0)
     {
         put_DevNonce(n,1);

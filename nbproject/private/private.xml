@@ -12,6 +12,7 @@
             <file>file:/C:/Users/ilya/MPLABXProjects/lorax_2/tmr_lora_addons.c</file>
             <file>file:/C:/Users/ilya/MPLABXProjects/lorax_2/lorawan.c</file>
             <file>file:/C:/Users/ilya/MPLABXProjects/lorax_2/sensors.c</file>
+            <file>file:/C:/Users/ilya/MPLABXProjects/lorax_2/eeprom.h</file>
             <file>file:/C:/Users/ilya/MPLABXProjects/lorax_2/radio_driver_SX1276.c</file>
             <file>file:/C:/Users/ilya/MPLABXProjects/lorax_2/mcc_generated_files/uart1.h</file>
             <file>file:/C:/Users/ilya/MPLABXProjects/lorax_2/measurements.c</file>
@@ -29,6 +30,7 @@
             <file>file:/C:/Users/ilya/MPLABXProjects/lorax_2/shell.h</file>
             <file>file:/C:/Users/ilya/MPLABXProjects/lorax_2/mcc_generated_files/pin_manager.h</file>
             <file>file:/C:/Users/ilya/MPLABXProjects/lorax_2/mcc_generated_files/nco1.c</file>
+            <file>file:/C:/Users/ilya/MPLABXProjects/lorax_2/mcc_generated_files/pin_manager.c</file>
             <file>file:/C:/Users/ilya/MPLABXProjects/lorax_2/sw_timer.c</file>
             <file>file:/C:/Users/ilya/MPLABXProjects/lorax_2/eeprom.c</file>
             <file>file:/C:/Users/ilya/MPLABXProjects/lorax_2/mcc_generated_files/interrupt_manager.h</file>
